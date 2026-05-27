@@ -15,6 +15,7 @@ class UsuarioDAO {
                 senha_hash,
                 tipo,
                 ativo,
+                primeiro_acesso,
                 mfa_secret,
                 mfa_ativo
             FROM usuarios
@@ -40,6 +41,7 @@ class UsuarioDAO {
                 senha_hash,
                 tipo,
                 ativo,
+                primeiro_acesso,
                 mfa_secret,
                 mfa_ativo
             FROM usuarios
@@ -63,6 +65,7 @@ class UsuarioDAO {
                 nome,
                 email,
                 ativo,
+                primeiro_acesso,
                 created_at
             FROM usuarios
             WHERE tipo = 'caixa'
@@ -86,12 +89,14 @@ class UsuarioDAO {
                 email,
                 senha_hash,
                 tipo,
-                ativo
+                ativo,
+                primeiro_acesso
             ) VALUES (
                 :nome,
                 :email,
                 :senha_hash,
                 'caixa',
+                TRUE,
                 TRUE
             )
         ";
@@ -116,6 +121,26 @@ class UsuarioDAO {
 
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(':id', $id);
+
+        return $stmt->execute();
+    }
+
+    public function trocarSenhaPrimeiroAcesso($usuarioId, $novaSenha) {
+        $conn = Database::conectar();
+
+        $senhaHash = md5($novaSenha);
+
+        $sql = "
+            UPDATE usuarios
+            SET
+                senha_hash = :senha_hash,
+                primeiro_acesso = FALSE
+            WHERE id = :id
+        ";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':senha_hash', $senhaHash);
+        $stmt->bindParam(':id', $usuarioId);
 
         return $stmt->execute();
     }

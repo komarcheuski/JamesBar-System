@@ -3,8 +3,13 @@ document
     .addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const email = document.getElementById('email').value;
-        const senha = document.getElementById('senha').value;
+        const email = document.getElementById('email').value.trim();
+        const senha = document.getElementById('senha').value.trim();
+
+        if (email === '' || senha === '') {
+            alert('Preencha e-mail e senha.');
+            return;
+        }
 
         try {
             const response = await fetch(

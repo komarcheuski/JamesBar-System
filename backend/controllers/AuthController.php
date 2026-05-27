@@ -101,6 +101,19 @@ if ($acao === 'login') {
         exit;
     }
 
+    if ((int) $usuario["primeiro_acesso"] === 1) {
+        $_SESSION["troca_senha_usuario_id"] = $usuario["id"];
+        $_SESSION["troca_senha_usuario_tipo"] = $usuario["tipo"];
+
+        echo json_encode([
+            "success" => true,
+            "primeiro_acesso" => true,
+            "message" => "Primeiro acesso detectado. Troque sua senha para continuar.",
+            "redirect" => "trocar_senha.html"
+        ]);
+        exit;
+    }
+
     if ($usuario["tipo"] === "adm") {
         $_SESSION["mfa_usuario_id"] = $usuario["id"];
 
@@ -141,6 +154,59 @@ if ($acao === 'login') {
             "nome" => $usuario["nome"],
             "tipo" => $usuario["tipo"]
         ]
+    ]);
+    exit;
+}
+
+if ($acao === 'trocar_senha_primeiro_acesso') {
+    if (!isset($_SESSION['troca_senha_usuario_id'])) {
+        echo json_encode([
+            "success" => false,
+            "message" => "Sessão expirada. Faça login novamente."
+        ]);
+        exit;
+    }
+
+    $novaSenha = trim($dados['nova_senha'] ?? '');
+    $confirmarSenha = trim($dados['confirmar_senha'] ?? '');
+
+    if (empty($novaSenha) || empty($confirmarSenha)) {
+        echo json_encode([
+            "success" => false,
+            "message" => "Preencha todos os campos."
+        ]);
+        exit;
+    }
+
+    if ($novaSenha !== $confirmarSenha) {
+        echo json_encode([
+            "success" => false,
+            "message" => "As senhas não coincidem."
+        ]);
+        exit;
+    }
+
+    if (strlen($novaSenha) < 6) {
+        echo json_encode([
+            "success" => false,
+            "message" => "A nova senha deve ter no mínimo 6 caracteres."
+        ]);
+        exit;
+    }
+
+    $usuarioId = $_SESSION['troca_senha_usuario_id'];
+
+    $usuarioDAO->trocarSenhaPrimeiroAcesso($usuarioId, $novaSenha);
+
+    unset($_SESSION['troca_senha_usuario_id']);
+    unset($_SESSION['troca_senha_usuario_tipo']);
+
+    session_destroy();
+
+    echo json_encode([
+        "success" => true,
+        "message" => "Senha alterada com sucesso. Faça login novamente.",
+        "redirect" => "login.html"
     ]);
     exit;
 }
