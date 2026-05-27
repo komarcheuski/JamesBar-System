@@ -12,6 +12,9 @@ $usuarioDAO = new UsuarioDAO();
 $turnoDAO = new TurnoDAO();
 $totpService = new TotpService();
 
+$limiteTentativas = 5;
+$minutosBloqueio = 10;
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $acao = $_GET['acao'] ?? '';
 
@@ -93,13 +96,58 @@ if ($acao === 'login') {
         exit;
     }
 
+    if (!empty($usuario["bloqueio_login_until"])) {
+        $bloqueioAte = strtotime($usuario["bloqueio_login_until"]);
+
+        if ($bloqueioAte > time()) {
+            $segundosRestantes = $bloqueioAte - time();
+            $minutosRestantes = ceil($segundosRestantes / 60);
+
+            echo json_encode([
+                "success" => false,
+                "message" => "Conta bloqueada temporariamente. Tente novamente em aproximadamente {$minutosRestantes} minuto(s)."
+            ]);
+            exit;
+        }
+    }
+
     if (md5($senha) !== $usuario["senha_hash"]) {
+        $tentativasAtuais = (int) ($usuario["tentativas_login"] ?? 0);
+        $novasTentativas = $tentativasAtuais + 1;
+
+        if ($novasTentativas >= $limiteTentativas) {
+            $bloqueioAte = date(
+                'Y-m-d H:i:s',
+                time() + ($minutosBloqueio * 60)
+            );
+
+            $usuarioDAO->bloquearLoginTemporariamente(
+                $usuario["id"],
+                $bloqueioAte
+            );
+
+            echo json_encode([
+                "success" => false,
+                "message" => "Senha incorreta. A conta foi bloqueada por {$minutosBloqueio} minutos após {$limiteTentativas} tentativas inválidas."
+            ]);
+            exit;
+        }
+
+        $usuarioDAO->atualizarTentativasLogin(
+            $usuario["id"],
+            $novasTentativas
+        );
+
+        $tentativasRestantes = $limiteTentativas - $novasTentativas;
+
         echo json_encode([
             "success" => false,
-            "message" => "Senha incorreta."
+            "message" => "Senha incorreta. Tentativas restantes: {$tentativasRestantes}."
         ]);
         exit;
     }
+
+    $usuarioDAO->limparTentativasLogin($usuario["id"]);
 
     if ((int) $usuario["primeiro_acesso"] === 1) {
         $_SESSION["troca_senha_usuario_id"] = $usuario["id"];
@@ -144,6 +192,7 @@ if ($acao === 'login') {
     $_SESSION["usuario_nome"] = $usuario["nome"];
     $_SESSION["usuario_email"] = $usuario["email"];
     $_SESSION["usuario_tipo"] = $usuario["tipo"];
+    $_SESSION["last_activity"] = time();
 
     echo json_encode([
         "success" => true,
@@ -247,6 +296,7 @@ if ($acao === 'verificar_mfa') {
     $_SESSION["usuario_nome"] = $usuario["nome"];
     $_SESSION["usuario_email"] = $usuario["email"];
     $_SESSION["usuario_tipo"] = $usuario["tipo"];
+    $_SESSION["last_activity"] = time();
 
     unset($_SESSION['mfa_usuario_id']);
 
@@ -254,6 +304,34 @@ if ($acao === 'verificar_mfa') {
         "success" => true,
         "message" => "MFA validado com sucesso.",
         "redirect" => "../adm/dashboardAdm.html"
+    ]);
+    exit;
+}
+
+if ($acao === 'logout_inatividade') {
+    if (isset($_SESSION["usuario_id"]) && ($_SESSION["usuario_tipo"] ?? '') === 'caixa') {
+        $turnoDAO->pausarTurno($_SESSION["usuario_id"]);
+    }
+
+    session_unset();
+    session_destroy();
+
+    echo json_encode([
+        "success" => true,
+        "message" => "Sessão encerrada por inatividade.",
+        "redirect" => "../auth/login.html?motivo=inatividade"
+    ]);
+    exit;
+}
+
+if ($acao === 'logout') {
+    session_unset();
+    session_destroy();
+
+    echo json_encode([
+        "success" => true,
+        "message" => "Logout realizado com sucesso.",
+        "redirect" => "../auth/login.html"
     ]);
     exit;
 }

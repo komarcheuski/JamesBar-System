@@ -2,7 +2,12 @@ let clienteAtualId = null;
 let clienteAtualNome = '';
 let clienteAtualTotalEntradas = 0;
 
+let tempoLimiteInatividade = 5 * 60 * 1000;
+let temporizadorInatividade = null;
+
 document.addEventListener('DOMContentLoaded', () => {
+    iniciarControleInatividade();
+
     carregarContadores();
 
     document.getElementById('formPesquisarCpf')?.addEventListener('submit', pesquisarCpf);
@@ -10,10 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnLiberarEntrada')?.addEventListener('click', liberarEntrada);
 
     document.getElementById('btnPausarTurno')?.addEventListener('click', () => {
+        reiniciarTemporizadorInatividade();
         document.getElementById('modalPausa').classList.add('ativo');
     });
 
     document.getElementById('btnEncerrarTurno')?.addEventListener('click', () => {
+        reiniciarTemporizadorInatividade();
         document.getElementById('modalEncerrarTurno').classList.add('ativo');
     });
 
@@ -21,8 +28,63 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('confirmarEncerramento')?.addEventListener('click', encerrarTurno);
 });
 
+function iniciarControleInatividade() {
+    const eventos = [
+        'mousemove',
+        'mousedown',
+        'keydown',
+        'click',
+        'scroll',
+        'touchstart'
+    ];
+
+    eventos.forEach(evento => {
+        document.addEventListener(evento, reiniciarTemporizadorInatividade);
+    });
+
+    reiniciarTemporizadorInatividade();
+}
+
+function reiniciarTemporizadorInatividade() {
+    clearTimeout(temporizadorInatividade);
+
+    temporizadorInatividade = setTimeout(() => {
+        logoutPorInatividade();
+    }, tempoLimiteInatividade);
+}
+
+async function logoutPorInatividade() {
+    try {
+        const response = await fetch('../../../backend/controllers/AuthController.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                acao: 'logout_inatividade'
+            })
+        });
+
+        const data = await response.json();
+
+        alert('Você foi desconectado por inatividade.\n\nComo você é caixa, isso foi registrado como pausa automática.');
+
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            window.location.href = '../auth/login.html?motivo=inatividade';
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert('Sessão encerrada por inatividade.');
+        window.location.href = '../auth/login.html?motivo=inatividade';
+    }
+}
+
 async function pesquisarCpf(event) {
     event.preventDefault();
+    reiniciarTemporizadorInatividade();
 
     const cpf = document.getElementById('cpf').value.trim();
 
@@ -59,6 +121,7 @@ async function pesquisarCpf(event) {
 
 async function cadastrarCliente(event) {
     event.preventDefault();
+    reiniciarTemporizadorInatividade();
 
     const nome = document.getElementById('nomeCliente').value.trim();
     const cpf = document.getElementById('cpfCadastro').value.trim();
@@ -98,6 +161,8 @@ async function cadastrarCliente(event) {
 }
 
 async function liberarEntrada() {
+    reiniciarTemporizadorInatividade();
+
     if (!clienteAtualId) {
         alert('Nenhum cliente selecionado.');
         return;
@@ -138,6 +203,8 @@ async function liberarEntrada() {
 }
 
 async function pausarTurno() {
+    reiniciarTemporizadorInatividade();
+
     try {
         const response = await fetch('../../../backend/controllers/CaixaController.php', {
             method: 'POST',
@@ -164,6 +231,8 @@ async function pausarTurno() {
 }
 
 async function encerrarTurno() {
+    reiniciarTemporizadorInatividade();
+
     try {
         const response = await fetch('../../../backend/controllers/CaixaController.php', {
             method: 'POST',
@@ -205,16 +274,21 @@ async function carregarContadores() {
 }
 
 function abrirModalCadastro() {
+    reiniciarTemporizadorInatividade();
     document.getElementById('modalCadastro').classList.add('ativo');
 }
 
 function abrirModalComanda() {
+    reiniciarTemporizadorInatividade();
+
     document.getElementById('nomeClienteComanda').innerText = clienteAtualNome;
     document.getElementById('vezClienteComanda').innerText = clienteAtualTotalEntradas + 1;
     document.getElementById('modalComanda').classList.add('ativo');
 }
 
 function fecharModais() {
+    reiniciarTemporizadorInatividade();
+
     document.querySelectorAll('.modal').forEach(modal => {
         modal.classList.remove('ativo');
     });

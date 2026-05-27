@@ -16,6 +16,8 @@ class UsuarioDAO {
                 tipo,
                 ativo,
                 primeiro_acesso,
+                tentativas_login,
+                bloqueio_login_until,
                 mfa_secret,
                 mfa_ativo
             FROM usuarios
@@ -42,6 +44,8 @@ class UsuarioDAO {
                 tipo,
                 ativo,
                 primeiro_acesso,
+                tentativas_login,
+                bloqueio_login_until,
                 mfa_secret,
                 mfa_ativo
             FROM usuarios
@@ -90,14 +94,18 @@ class UsuarioDAO {
                 senha_hash,
                 tipo,
                 ativo,
-                primeiro_acesso
+                primeiro_acesso,
+                tentativas_login,
+                bloqueio_login_until
             ) VALUES (
                 :nome,
                 :email,
                 :senha_hash,
                 'caixa',
                 TRUE,
-                TRUE
+                TRUE,
+                0,
+                NULL
             )
         ";
 
@@ -171,6 +179,60 @@ class UsuarioDAO {
         ";
 
         $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':id', $usuarioId);
+
+        return $stmt->execute();
+    }
+
+    public function atualizarTentativasLogin($usuarioId, $tentativas) {
+        $conn = Database::conectar();
+
+        $sql = "
+            UPDATE usuarios
+            SET tentativas_login = :tentativas
+            WHERE id = :id
+        ";
+
+        $stmt = $conn->prepare($sql);
+
+        $stmt->bindParam(':tentativas', $tentativas);
+        $stmt->bindParam(':id', $usuarioId);
+
+        return $stmt->execute();
+    }
+
+    public function bloquearLoginTemporariamente($usuarioId, $bloqueioAte) {
+        $conn = Database::conectar();
+
+        $sql = "
+            UPDATE usuarios
+            SET
+                tentativas_login = 0,
+                bloqueio_login_until = :bloqueio
+            WHERE id = :id
+        ";
+
+        $stmt = $conn->prepare($sql);
+
+        $stmt->bindParam(':bloqueio', $bloqueioAte);
+        $stmt->bindParam(':id', $usuarioId);
+
+        return $stmt->execute();
+    }
+
+    public function limparTentativasLogin($usuarioId) {
+        $conn = Database::conectar();
+
+        $sql = "
+            UPDATE usuarios
+            SET
+                tentativas_login = 0,
+                bloqueio_login_until = NULL
+            WHERE id = :id
+        ";
+
+        $stmt = $conn->prepare($sql);
+
         $stmt->bindParam(':id', $usuarioId);
 
         return $stmt->execute();

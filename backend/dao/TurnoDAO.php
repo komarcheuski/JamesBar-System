@@ -102,6 +102,44 @@ class TurnoDAO {
         return $stmtPausa->execute();
     }
 
+    public function pausarTurnoAutomatico($usuarioId) {
+        $conn = Database::conectar();
+
+        $turno = $this->buscarTurnoHoje($usuarioId);
+
+        if (!$turno || $turno['status'] !== 'aberto') {
+            return false;
+        }
+
+        $sqlTurno = "
+            UPDATE turnos_caixa
+            SET
+                status = 'pausado',
+                pausado_em = NOW(),
+                total_pausas = total_pausas + 1
+            WHERE id = :turno_id
+        ";
+
+        $stmtTurno = $conn->prepare($sqlTurno);
+        $stmtTurno->bindParam(':turno_id', $turno['id']);
+        $stmtTurno->execute();
+
+        $sqlPausa = "
+            INSERT INTO pausas_caixa (
+                turno_id,
+                inicio_pausa
+            ) VALUES (
+                :turno_id,
+                NOW()
+            )
+        ";
+
+        $stmtPausa = $conn->prepare($sqlPausa);
+        $stmtPausa->bindParam(':turno_id', $turno['id']);
+
+        return $stmtPausa->execute();
+    }
+
     public function fecharTurno($usuarioId) {
         $conn = Database::conectar();
 

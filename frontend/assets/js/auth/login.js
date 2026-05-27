@@ -1,3 +1,7 @@
+document.addEventListener('DOMContentLoaded', () => {
+    verificarMensagemUrl();
+});
+
 document
     .getElementById('loginForm')
     .addEventListener('submit', async function (e) {
@@ -40,3 +44,20 @@ document
             alert('Erro ao conectar com o servidor.');
         }
     });
+
+function verificarMensagemUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const motivo = params.get('motivo');
+
+    if (motivo === 'inatividade') {
+        alert(
+            'Você foi desconectado por inatividade.\n\nSe você era caixa, essa saída foi registrada como pausa automática.'
+        );
+
+        window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+        );
+    }
+}
