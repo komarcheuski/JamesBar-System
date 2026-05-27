@@ -1,0 +1,292 @@
+@import url('../global.css');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+.background {
+    position: fixed;
+    inset: 0;
+
+    background-image: url("../../img/background03.jpg");
+    background-size: cover;
+    background-position: center;
+
+    filter: blur(1px);
+    transform: scale(1.1);
+
+    z-index: -2;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--overlay-black),
+            var(--overlay-red),
+            var(--overlay-purple)
+        );
+
+    z-index: -1;
+}
+
+.login-container {
+    width: 100%;
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 450px;
+
+    padding: 45px;
+
+    background: rgba(15, 15, 15, 0.14);
+
+    border-radius: 25px;
+    border: 1px solid rgba(255, 0, 80, 0.4);
+
+    backdrop-filter: blur(10px);
+
+    box-shadow:
+        0 0 30px var(--shadow-primary),
+        0 0 60px var(--shadow-secondary);
+}
+
+.logo-area {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.logo-area h1 {
+    color: var(--color-white);
+
+    font-size: 38px;
+    letter-spacing: 4px;
+
+    text-shadow:
+        0 0 15px var(--color-primary),
+        0 0 30px var(--color-secondary);
+}
+
+.logo-area p {
+    margin-top: 10px;
+
+    color: var(--color-light-gray);
+
+    font-size: 15px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+
+    margin-bottom: 18px;
+}
+
+.input-group label {
+    color: var(--color-white);
+
+    margin-bottom: 8px;
+
+    font-size: 14px;
+}
+
+.input-group input {
+    padding: 15px;
+
+    border: none;
+    border-radius: 12px;
+
+    background-color: var(--color-input);
+    color: var(--color-white);
+
+    font-size: 15px;
+
+    outline: none;
+
+    transition: 0.3s;
+}
+
+.input-group input::placeholder {
+    color: var(--color-gray);
+}
+
+.input-group input:focus {
+    border: 1px solid var(--color-primary);
+
+    box-shadow:
+        0 0 10px var(--glow-primary),
+        0 0 20px var(--glow-secondary);
+}
+
+.forca-senha-area {
+    display: flex;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-bottom: 10px;
+}
+
+.forca-item {
+    flex: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 10px;
+
+    border-radius: 12px;
+
+    background: rgba(37, 37, 37, 0.75);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.forca-item p {
+    color: var(--color-light-gray);
+
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.bolinha {
+    width: 13px;
+    height: 13px;
+
+    display: inline-block;
+
+    border-radius: 50%;
+
+    background: #555;
+
+    transition: 0.3s;
+}
+
+.bolinha.fraca {
+    background: #ff003c;
+
+    box-shadow:
+        0 0 8px rgba(255, 0, 60, 0.8),
+        0 0 18px rgba(255, 0, 60, 0.4);
+}
+
+.bolinha.media {
+    background: #ffcc00;
+
+    box-shadow:
+        0 0 8px rgba(255, 204, 0, 0.8),
+        0 0 18px rgba(255, 204, 0, 0.4);
+}
+
+.bolinha.forte {
+    background: #00e676;
+
+    box-shadow:
+        0 0 8px rgba(0, 230, 118, 0.8),
+        0 0 18px rgba(0, 230, 118, 0.4);
+}
+
+.mensagem-validacao {
+    min-height: 18px;
+
+    margin-bottom: 18px;
+
+    color: var(--color-light-gray);
+
+    font-size: 13px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.mensagem-validacao.erro {
+    color: #ff4d6d;
+}
+
+.mensagem-validacao.aviso {
+    color: #ffcc00;
+}
+
+.mensagem-validacao.sucesso {
+    color: #00e676;
+}
+
+.btn-login {
+    width: 100%;
+
+    padding: 15px;
+
+    border: none;
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--color-primary),
+            var(--color-secondary)
+        );
+
+    color: var(--color-white);
+
+    font-size: 16px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 0 15px var(--glow-primary),
+        0 0 25px var(--glow-secondary);
+}
+
+.btn-login:disabled {
+    opacity: 0.45;
+
+    cursor: not-allowed;
+
+    filter: grayscale(0.5);
+
+    transform: none;
+    box-shadow: none;
+}
+
+@media (max-width: 500px) {
+    .login-card {
+        padding: 35px 25px;
+    }
+
+    .logo-area h1 {
+        font-size: 30px;
+    }
+
+    .forca-senha-area {
+        flex-direction: column;
+    }
+}

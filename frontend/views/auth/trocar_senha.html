@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trocar Senha | JamesBar</title>
+
+    <link rel="stylesheet" href="../../assets/css/global.css">
+    <link rel="stylesheet" href="../../assets/css/auth/trocar_senha.css">
+</head>
+
+<body>
+
+    <div class="background"></div>
+    <div class="overlay"></div>
+
+    <div class="login-container">
+
+        <div class="login-card">
+
+            <div class="logo-area">
+                <h1>JAMESBAR</h1>
+                <p>Troca obrigatória de senha</p>
+            </div>
+
+            <form id="formTrocarSenha">
+
+                <div class="input-group">
+                    <label for="novaSenha">Nova senha</label>
+
+                    <input
+                        type="password"
+                        id="novaSenha"
+                        placeholder="Digite uma senha forte"
+                        required>
+                </div>
+
+                <div class="forca-senha-area">
+                    <div class="forca-item">
+                        <span id="bolinhaFraca" class="bolinha"></span>
+                        <p>Fraca</p>
+                    </div>
+
+                    <div class="forca-item">
+                        <span id="bolinhaMedia" class="bolinha"></span>
+                        <p>Média</p>
+                    </div>
+
+                    <div class="forca-item">
+                        <span id="bolinhaForte" class="bolinha"></span>
+                        <p>Forte</p>
+                    </div>
+                </div>
+
+                <p id="mensagemForca" class="mensagem-validacao">
+                    Digite uma senha forte.
+                </p>
+
+                <div class="input-group">
+                    <label for="confirmarSenha">Confirmar senha</label>
+
+                    <input
+                        type="password"
+                        id="confirmarSenha"
+                        placeholder="Confirme a nova senha"
+                        required>
+                </div>
+
+                <p id="mensagemIgualdade" class="mensagem-validacao">
+                    As senhas ainda não coincidem.
+                </p>
+
+                <button
+                    type="submit"
+                    id="btnAlterarSenha"
+                    class="btn-login"
+                    disabled>
+                    Alterar Senha
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <script src="../../assets/js/auth/trocar_senha.js"></script>
+
+</body>
+</html>

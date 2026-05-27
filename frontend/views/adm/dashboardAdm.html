@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADM | JamesBar</title>
+
+    <link rel="stylesheet" href="../../assets/css/global.css">
+    <link rel="stylesheet" href="../../assets/css/adm/dashboard.css">
+</head>
+
+<body>
+
+<header class="adm-header">
+    <div class="welcome-area">
+        <h1>Bem-vindo, <span id="nomeAdm">Administrador</span></h1>
+        <p class="dia-atual">Hoje é <span id="diaSemanaAtual">-</span></p>
+    </div>
+
+    <div class="adm-actions">
+        <button id="btnIniciarTurno" class="btn-adm btn-iniciar">Iniciar turno do dia</button>
+        <button id="btnEncerrarTurnoDia" class="btn-adm btn-encerrar">Encerrar turno do dia</button>
+
+        <button id="btnSair" class="btn-sair">
+            <img src="../../assets/img/exit.png" alt="Sair">
+            <span>Sair</span>
+        </button>
+    </div>
+</header>
+
+<main class="adm-container">
+
+    <section class="adm-card">
+        <h2>Painel Administrativo</h2>
+        <p>Gerencie caixas, promoters, listas de festa e listas de aniversário.</p>
+    </section>
+
+    <section class="caixas-area">
+        <div class="caixas-topo">
+            <div>
+                <h2>Caixas cadastrados</h2>
+                <p>Visualize, cadastre, desative e acompanhe os caixas.</p>
+            </div>
+
+            <button id="btnAbrirCadastroCaixa" class="btn-novo-caixa">Cadastrar Caixa</button>
+        </div>
+
+        <div id="listaCaixas" class="lista-caixas"></div>
+    </section>
+
+    <section class="promoters-area">
+        <div class="caixas-topo">
+            <div>
+                <h2>Promoters cadastrados</h2>
+                <p>Adicione, edite e exclua promoters.</p>
+            </div>
+
+            <button id="btnAbrirCadastroPromoter" class="btn-novo-caixa">Cadastrar Promoter</button>
+        </div>
+
+        <div id="listaPromoters" class="lista-caixas"></div>
+    </section>
+
+    <section class="listas-area">
+        <div class="caixas-topo">
+            <div>
+                <h2>Cadastrar lista de promoter</h2>
+                <p>5 convidados gratuitos e até 20 nomes VIP. Após envio, não pode editar nem apagar.</p>
+            </div>
+
+            <button id="btnAbrirListaPromoter" class="btn-novo-caixa">Nova Lista Promoter</button>
+        </div>
+    </section>
+
+    <section class="listas-area">
+        <div class="caixas-topo">
+            <div>
+                <h2>Cadastrar lista de aniversário</h2>
+                <p>Lista de aniversário com até 20 convidados.</p>
+            </div>
+
+            <button id="btnAbrirListaAniversario" class="btn-novo-caixa">Nova Lista Aniversário</button>
+        </div>
+    </section>
+
+    <section class="listas-area">
+        <div class="caixas-topo">
+            <div>
+                <h2>Listas dos promoters</h2>
+                <p>Filtre as listas pelo dia da festa.</p>
+            </div>
+
+            <select id="filtroDiaLista" class="filtro-dia">
+                <option value="">Todos os dias</option>
+            </select>
+        </div>
+
+        <div id="listaListasPromoters" class="lista-listas-promoters"></div>
+    </section>
+
+    <section class="listas-area">
+        <div class="caixas-topo">
+            <div>
+                <h2>Listas de aniversário</h2>
+                <p>Visualização das listas cadastradas para aniversariantes.</p>
+            </div>
+        </div>
+
+        <div id="listaAniversarios" class="lista-listas-promoters"></div>
+    </section>
+
+    <section class="listas-area">
+        <div class="caixas-topo">
+            <div>
+                <h2>Status de envio dos promoters</h2>
+                <p>Veja quem enviou ou não enviou lista para a data do evento.</p>
+            </div>
+
+            <input type="date" id="dataStatusEnvio" class="filtro-dia">
+        </div>
+
+        <div id="statusEnvioPromoters" class="lista-listas-promoters"></div>
+    </section>
+
+</main>
+
+<div id="modalCadastroCaixa" class="modal">
+    <div class="modal-card">
+        <button class="btn-fechar" onclick="fecharModais()" type="button">✕</button>
+
+        <h2>Cadastrar Novo Caixa</h2>
+
+        <form id="formCadastroCaixa">
+            <div class="input-group">
+                <label for="nomeCaixa">Nome do caixa</label>
+                <input type="text" id="nomeCaixa" placeholder="Ex: Caixa 07" required>
+            </div>
+
+            <div class="input-group">
+                <label for="emailCaixa">E-mail</label>
+                <input type="email" id="emailCaixa" placeholder="caixa07@jamesbar.com" required>
+            </div>
+
+            <div class="input-group">
+                <label for="senhaCaixa">Senha</label>
+                <input type="password" id="senhaCaixa" placeholder="Digite a senha" required>
+            </div>
+
+            <button type="submit" class="btn-confirmar">Cadastrar</button>
+        </form>
+    </div>
+</div>
+
+<div id="modalDetalhesCaixa" class="modal">
+    <div class="modal-card modal-detalhes">
+        <button class="btn-fechar" onclick="fecharModais()" type="button">✕</button>
+
+        <h2 id="detalheNomeCaixa">Operações do Caixa</h2>
+
+        <div class="detalhes-grid">
+            <div class="detalhe-box">
+                <strong id="detalheEntradas">0</strong>
+                <span>Entradas</span>
+            </div>
+
+            <div class="detalhe-box">
+                <strong id="detalheSaidas">0</strong>
+                <span>Saídas</span>
+            </div>
+
+            <div class="detalhe-box">
+                <strong id="detalhePausas">0</strong>
+                <span>Pausas</span>
+            </div>
+        </div>
+
+        <div class="turno-info">
+            <p><strong>Início do turno:</strong> <span id="detalheInicioTurno">-</span></p>
+            <p><strong>Fim do turno:</strong> <span id="detalheFimTurno">-</span></p>
+            <p><strong>Status:</strong> <span id="detalheStatusTurno">-</span></p>
+        </div>
+
+        <h3>Horários das pausas</h3>
+        <div id="listaPausas" class="lista-pausas"></div>
+    </div>
+</div>
+
+<div id="modalPromoter" class="modal">
+    <div class="modal-card">
+        <button class="btn-fechar" onclick="fecharModais()" type="button">✕</button>
+
+        <h2 id="tituloModalPromoter">Cadastrar Promoter</h2>
+
+        <form id="formPromoter">
+            <input type="hidden" id="promoterId">
+
+            <div class="input-group">
+                <label for="nomePromoter">Nome do promoter</label>
+                <input type="text" id="nomePromoter" placeholder="Digite o nome" required>
+            </div>
+
+            <div class="input-group">
+                <label for="telefonePromoter">Telefone</label>
+                <input type="text" id="telefonePromoter" placeholder="(41) 99999-9999">
+            </div>
+
+            <div class="dias-promoter-form">
+                <label>Dias liberados</label>
+
+                <div class="dias-grid">
+                    <label><input type="checkbox" value="quarta" class="dia-promoter"> Quarta</label>
+                    <label><input type="checkbox" value="quinta" class="dia-promoter"> Quinta</label>
+                    <label><input type="checkbox" value="sexta" class="dia-promoter"> Sexta</label>
+                    <label><input type="checkbox" value="sabado" class="dia-promoter"> Sábado</label>
+                    <label><input type="checkbox" value="domingo" class="dia-promoter"> Domingo</label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-confirmar">Salvar Promoter</button>
+        </form>
+    </div>
+</div>
+
+<div id="modalListaPromoter" class="modal">
+    <div class="modal-card modal-lista-grande">
+        <button class="btn-fechar" onclick="fecharModais()" type="button">✕</button>
+
+        <h2>Nova Lista de Promoter</h2>
+
+        <form id="formListaPromoter">
+            <div class="linha-form">
+                <div class="input-group">
+                    <label for="selectPromoterLista">Promoter</label>
+                    <select id="selectPromoterLista" class="input-select" required></select>
+                </div>
+
+                <div class="input-group">
+                    <label for="selectDiaLista">Dia da festa</label>
+                    <select id="selectDiaLista" class="input-select" required></select>
+                </div>
+
+                <div class="input-group">
+                    <label for="dataListaPromoter">Data do evento</label>
+                    <input type="date" id="dataListaPromoter" required>
+                </div>
+            </div>
+
+            <h3>Convidados gratuitos - máximo 5</h3>
+            <div id="camposConvidadosPromoter" class="campos-lista"></div>
+
+            <h3>VIPs R$15 - máximo 20</h3>
+            <div id="camposVipsPromoter" class="campos-lista"></div>
+
+            <button type="submit" class="btn-confirmar">Enviar Lista</button>
+        </form>
+    </div>
+</div>
+
+<div id="modalListaAniversario" class="modal">
+    <div class="modal-card modal-lista-grande">
+        <button class="btn-fechar" onclick="fecharModais()" type="button">✕</button>
+
+        <h2>Nova Lista de Aniversário</h2>
+
+        <form id="formListaAniversario">
+            <div class="linha-form">
+                <div class="input-group">
+                    <label for="aniversarianteNome">Nome do aniversariante</label>
+                    <input type="text" id="aniversarianteNome" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="aniversarianteCpf">CPF do aniversariante</label>
+                    <input type="text" id="aniversarianteCpf">
+                </div>
+
+                <div class="input-group">
+                    <label for="dataEventoAniversario">Data do evento</label>
+                    <input type="date" id="dataEventoAniversario" required>
+                </div>
+            </div>
+
+            <h3>Convidados do aniversariante - máximo 20</h3>
+            <div id="camposConvidadosAniversario" class="campos-lista"></div>
+
+            <button type="submit" class="btn-confirmar">Enviar Lista</button>
+        </form>
+    </div>
+</div>
+
+<script src="../../assets/js/adm/dashboard.js"></script>
+
+</body>
+</html>
