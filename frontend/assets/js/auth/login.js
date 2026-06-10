@@ -1,7 +1,6 @@
 document
     .getElementById('loginForm')
     .addEventListener('submit', async function (e) {
-
         e.preventDefault();
 
         const email = document.getElementById('email').value;
@@ -16,6 +15,7 @@ document
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
+                        acao: 'login',
                         email: email,
                         senha: senha
                     })
@@ -31,6 +31,7 @@ document
             }
 
         } catch (error) {
+            console.error(error);
             alert('Erro ao conectar com o servidor.');
         }
     });

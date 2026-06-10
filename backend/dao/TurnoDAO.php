@@ -129,6 +129,57 @@ class TurnoDAO {
         return $stmt->execute();
     }
 
+    public function buscarResumoOperacional($usuarioId) {
+        $conn = Database::conectar();
+
+        $sql = "
+            SELECT
+                COALESCE(SUM(CASE WHEN m.tipo = 'entrada' THEN 1 ELSE 0 END), 0) AS total_entradas,
+                COALESCE(SUM(CASE WHEN m.tipo = 'saida' THEN 1 ELSE 0 END), 0) AS total_saidas,
+                COALESCE(t.total_pausas, 0) AS total_pausas
+            FROM usuarios u
+            LEFT JOIN movimentacoes m
+                ON m.caixa_id = u.id
+                AND DATE(m.data_hora) = CURDATE()
+            LEFT JOIN turnos_caixa t
+                ON t.usuario_id = u.id
+                AND t.data_turno = CURDATE()
+            WHERE u.id = :usuario_id
+            GROUP BY u.id, t.total_pausas
+        ";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':usuario_id', $usuarioId);
+        $stmt->execute();
+
+        $resumo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $resumo ?: [
+            'total_entradas' => 0,
+            'total_saidas' => 0,
+            'total_pausas' => 0
+        ];
+    }
+
+    public function listarPausasDoTurno($turnoId) {
+        $conn = Database::conectar();
+
+        $sql = "
+            SELECT
+                inicio_pausa,
+                fim_pausa
+            FROM pausas_caixa
+            WHERE turno_id = :turno_id
+            ORDER BY inicio_pausa ASC
+        ";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':turno_id', $turnoId);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     private function finalizarUltimaPausa($turnoId) {
         $conn = Database::conectar();
 

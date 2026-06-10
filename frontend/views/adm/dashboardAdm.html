@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADM | JamesBar</title>
+
+    <link rel="stylesheet" href="../../assets/css/global.css">
+    <link rel="stylesheet" href="../../assets/css/adm/dashboard.css">
+</head>
+
+<body>
+
+<header class="adm-header">
+    <div class="welcome-area">
+        <h1>
+            Bem-vindo, <span id="nomeAdm">Administrador</span>
+        </h1>
+    </div>
+
+    <div class="adm-actions">
+        <button id="btnIniciarTurno" class="btn-adm btn-iniciar">
+            Iniciar turno do dia
+        </button>
+
+        <button id="btnEncerrarTurnoDia" class="btn-adm btn-encerrar">
+            Encerrar turno do dia
+        </button>
+
+        <button id="btnSair" class="btn-sair">
+            <img src="../../assets/img/exit.png" alt="Sair">
+            <span>Sair</span>
+        </button>
+    </div>
+</header>
+
+<main class="adm-container">
+
+    <section class="adm-card">
+        <h2>Painel Administrativo</h2>
+        <p>Gerencie os caixas e acompanhe suas operações do turno.</p>
+    </section>
+
+    <section class="caixas-area">
+
+        <div class="caixas-topo">
+            <div>
+                <h2>Caixas cadastrados</h2>
+                <p>Visualize, cadastre, desative e acompanhe os caixas.</p>
+            </div>
+
+            <button id="btnAbrirCadastroCaixa" class="btn-novo-caixa">
+                Cadastrar Caixa
+            </button>
+        </div>
+
+        <div id="listaCaixas" class="lista-caixas"></div>
+
+    </section>
+
+</main>
+
+<div id="modalCadastroCaixa" class="modal">
+    <div class="modal-card">
+        <button class="btn-fechar" onclick="fecharModais()" type="button">✕</button>
+
+        <h2>Cadastrar Novo Caixa</h2>
+
+        <form id="formCadastroCaixa">
+
+            <div class="input-group">
+                <label for="nomeCaixa">Nome do caixa</label>
+                <input type="text" id="nomeCaixa" placeholder="Ex: Caixa 07" required>
+            </div>
+
+            <div class="input-group">
+                <label for="emailCaixa">E-mail</label>
+                <input type="email" id="emailCaixa" placeholder="caixa07@jamesbar.com" required>
+            </div>
+
+            <div class="input-group">
+                <label for="senhaCaixa">Senha</label>
+                <input type="password" id="senhaCaixa" placeholder="Digite a senha" required>
+            </div>
+
+            <button type="submit" class="btn-confirmar">
+                Cadastrar
+            </button>
+
+        </form>
+    </div>
+</div>
+
+<div id="modalDetalhesCaixa" class="modal">
+    <div class="modal-card modal-detalhes">
+        <button class="btn-fechar" onclick="fecharModais()" type="button">✕</button>
+
+        <h2 id="detalheNomeCaixa">Operações do Caixa</h2>
+
+        <div class="detalhes-grid">
+            <div class="detalhe-box">
+                <strong id="detalheEntradas">0</strong>
+                <span>Entradas</span>
+            </div>
+
+            <div class="detalhe-box">
+                <strong id="detalheSaidas">0</strong>
+                <span>Saídas</span>
+            </div>
+
+            <div class="detalhe-box">
+                <strong id="detalhePausas">0</strong>
+                <span>Pausas</span>
+            </div>
+        </div>
+
+        <div class="turno-info">
+            <p><strong>Início do turno:</strong> <span id="detalheInicioTurno">-</span></p>
+            <p><strong>Fim do turno:</strong> <span id="detalheFimTurno">-</span></p>
+            <p><strong>Status:</strong> <span id="detalheStatusTurno">-</span></p>
+        </div>
+
+        <h3>Horários das pausas</h3>
+
+        <div id="listaPausas" class="lista-pausas"></div>
+    </div>
+</div>
+
+<script src="../../assets/js/adm/dashboard.js"></script>
+
+</body>
+</html>
