@@ -43,7 +43,7 @@ class Lista implements JsonSerializable, ArrayAccess {
         ];
     }
 
-    public function jsonSerialize() {
+    public function jsonSerialize(): mixed {
         return $this->toArray();
     }
 
