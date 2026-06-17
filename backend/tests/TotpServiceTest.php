@@ -21,12 +21,14 @@ class TotpServiceTest extends TestCase {
             'JBSWY3DPEHPK3PXP'
         );
 
-        $urlDecodificada = urldecode($url);
+        $urlDecodificadaUmaVez = urldecode($url);
+        $urlDecodificadaDuasVezes = urldecode($urlDecodificadaUmaVez);
 
         $this->assertStringContainsString('api.qrserver.com', $url);
-        $this->assertStringContainsString('otpauth://totp', $urlDecodificada);
-        $this->assertStringContainsString('JamesBar', $urlDecodificada);
-        $this->assertStringContainsString('admin@jamesbar.com', $urlDecodificada);
+        $this->assertStringContainsString('otpauth://totp', $urlDecodificadaDuasVezes);
+        $this->assertStringContainsString('JamesBar', $urlDecodificadaDuasVezes);
+        $this->assertStringContainsString('admin@jamesbar.com', $urlDecodificadaDuasVezes);
+        $this->assertStringContainsString('JBSWY3DPEHPK3PXP', $urlDecodificadaDuasVezes);
     }
 
     public function testCodigoComLetrasRetornaFalse() {
