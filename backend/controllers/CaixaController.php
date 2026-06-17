@@ -7,150 +7,171 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../dao/ClienteDAO.php';
 require_once __DIR__ . '/../dao/MovimentacaoDAO.php';
 require_once __DIR__ . '/../dao/TurnoDAO.php';
+require_once __DIR__ . '/../security/SecurityHelper.php';
 
 $clienteDAO = new ClienteDAO();
 $movimentacaoDAO = new MovimentacaoDAO();
 $turnoDAO = new TurnoDAO();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dados = json_decode(file_get_contents("php://input"), true);
+    jb_require_login('caixa');
 
-    $acao = $dados['acao'] ?? '';
+    $dados = json_decode(file_get_contents('php://input'), true);
+
+    if (!is_array($dados)) {
+        jb_json_response([
+            'success' => false,
+            'message' => 'Dados inválidos.'
+        ]);
+    }
+
+    $acao = jb_sanitize_text($dados['acao'] ?? '', 50);
 
     if ($acao === 'pesquisar_cpf') {
-        $cpf = trim($dados['cpf'] ?? '');
+        $cpf = jb_sanitize_cpf($dados['cpf'] ?? '');
+
+        if (!jb_validate_cpf($cpf)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'CPF inválido. Use 000.000.000-00.'
+            ]);
+        }
 
         $cliente = $clienteDAO->buscarPorCpf($cpf);
 
         if ($cliente) {
-            echo json_encode([
+            jb_json_response([
                 'success' => true,
                 'message' => 'Cliente encontrado.',
                 'cliente' => $cliente
             ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Cliente não cadastrado.'
-            ]);
         }
 
-        exit;
+        jb_json_response([
+            'success' => false,
+            'message' => 'Cliente não cadastrado.'
+        ]);
     }
 
     if ($acao === 'cadastrar_cliente') {
-        $nome = trim($dados['nome'] ?? '');
-        $cpf = trim($dados['cpf'] ?? '');
-        $dataAniversario = trim($dados['data_aniversario'] ?? '');
+        $nome = jb_sanitize_text($dados['nome'] ?? '', 100);
+        $cpf = jb_sanitize_cpf($dados['cpf'] ?? '');
+        $dataAniversario = jb_sanitize_text($dados['data_aniversario'] ?? '', 10);
 
-        if (empty($nome) || empty($cpf) || empty($dataAniversario)) {
-            echo json_encode([
+        if ($nome === '' || $cpf === '' || $dataAniversario === '') {
+            jb_json_response([
                 'success' => false,
                 'message' => 'Preencha todos os campos.'
             ]);
-            exit;
         }
 
-        $clienteExistente = $clienteDAO->buscarPorCpf($cpf);
+        if (!jb_validate_nome($nome)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Nome inválido.'
+            ]);
+        }
 
-        if ($clienteExistente) {
-            echo json_encode([
+        if (!jb_validate_cpf($cpf)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'CPF inválido. Use 000.000.000-00.'
+            ]);
+        }
+
+        if (!jb_validate_date($dataAniversario)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Data de aniversário inválida.'
+            ]);
+        }
+
+        if ($clienteDAO->buscarPorCpf($cpf)) {
+            jb_json_response([
                 'success' => false,
                 'message' => 'CPF já cadastrado.'
             ]);
-            exit;
         }
 
         $clienteId = $clienteDAO->cadastrar($nome, $cpf, $dataAniversario);
 
-        echo json_encode([
+        jb_json_response([
             'success' => true,
             'message' => 'Cliente cadastrado com sucesso.',
             'cliente' => [
-                'id' => $clienteId,
+                'id' => (int) $clienteId,
                 'nome' => $nome,
                 'cpf' => $cpf
             ]
         ]);
-
-        exit;
     }
 
     if ($acao === 'liberar_entrada') {
-        $clienteId = intval($dados['cliente_id'] ?? 0);
+        $clienteId = filter_var($dados['cliente_id'] ?? 0, FILTER_VALIDATE_INT) ?: 0;
 
         if ($clienteId <= 0) {
-            echo json_encode([
+            jb_json_response([
                 'success' => false,
                 'message' => 'Cliente inválido.'
             ]);
-            exit;
         }
 
-        $caixaId = $_SESSION['usuario_id'] ?? 2;
-
+        $caixaId = (int) $_SESSION['usuario_id'];
         $movimentacaoDAO->registrarEntrada($clienteId, $caixaId);
 
-        echo json_encode([
+        jb_json_response([
             'success' => true,
             'message' => 'Entrada liberada com sucesso!'
         ]);
-
-        exit;
     }
 
     if ($acao === 'pausar_turno') {
-        $caixaId = $_SESSION['usuario_id'] ?? 2;
-
+        $caixaId = (int) $_SESSION['usuario_id'];
         $turnoDAO->pausarTurno($caixaId);
 
+        session_unset();
         session_destroy();
 
-        echo json_encode([
+        jb_json_response([
             'success' => true,
             'message' => 'Pausa acionada com sucesso.',
             'redirect' => '../auth/login.html'
         ]);
-
-        exit;
     }
 
     if ($acao === 'encerrar_turno') {
-        $caixaId = $_SESSION['usuario_id'] ?? 2;
-
+        $caixaId = (int) $_SESSION['usuario_id'];
         $turnoDAO->fecharTurno($caixaId);
 
+        session_unset();
         session_destroy();
 
-        echo json_encode([
+        jb_json_response([
             'success' => true,
             'message' => 'ATE A PROXIMA!! :))',
             'redirect' => '../auth/login.html'
         ]);
-
-        exit;
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $acao = $_GET['acao'] ?? '';
+    jb_require_login('caixa');
+
+    $acao = jb_sanitize_text($_GET['acao'] ?? '', 50);
 
     if ($acao === 'contador') {
-        $caixaId = $_SESSION['usuario_id'] ?? 2;
-
+        $caixaId = (int) $_SESSION['usuario_id'];
         $contador = $movimentacaoDAO->buscarContadores($caixaId);
 
-        echo json_encode([
+        jb_json_response([
             'success' => true,
-            'total_entradas' => $contador['total_entradas'] ?? 0,
-            'total_saidas' => $contador['total_saidas'] ?? 0
+            'total_entradas' => (int) ($contador['total_entradas'] ?? 0),
+            'total_saidas' => (int) ($contador['total_saidas'] ?? 0)
         ]);
-
-        exit;
     }
 }
 
-echo json_encode([
+jb_json_response([
     'success' => false,
     'message' => 'Ação inválida.'
 ]);

@@ -1,0 +1,19 @@
+# Dependências PHP
+backend/vendor/
+
+# Cache de testes
+backend/.phpunit.cache/
+.phpunit.cache/
+
+# Chaves privadas geradas para criptografia do MFA
+backend/security/keys/
+
+# Arquivos locais sensíveis
+backend/.env
+.env
+
+# Sistema operacional / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

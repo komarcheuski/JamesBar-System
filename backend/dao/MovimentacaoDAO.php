@@ -20,7 +20,6 @@ class MovimentacaoDAO {
         ";
 
         $stmt = $conn->prepare($sql);
-
         $stmt->bindParam(':cliente_id', $clienteId);
         $stmt->bindParam(':caixa_id', $caixaId);
 

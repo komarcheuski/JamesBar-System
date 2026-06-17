@@ -6,46 +6,58 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../dao/UsuarioDAO.php';
 require_once __DIR__ . '/../dao/TurnoDAO.php';
+require_once __DIR__ . '/../security/SecurityHelper.php';
 
 $usuarioDAO = new UsuarioDAO();
 $turnoDAO = new TurnoDAO();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $acao = $_GET['acao'] ?? '';
+    $acao = jb_sanitize_text($_GET['acao'] ?? '', 50);
 
     if ($acao === 'usuario_logado') {
-        echo json_encode([
+        jb_require_login('adm');
+
+        jb_json_response([
             'success' => true,
             'nome' => $_SESSION['usuario_nome'] ?? 'Administrador'
         ]);
-        exit;
     }
 
     if ($acao === 'listar_caixas') {
-        echo json_encode([
+        jb_require_login('adm');
+
+        jb_json_response([
             'success' => true,
             'caixas' => $usuarioDAO->listarCaixas()
         ]);
-        exit;
     }
 
     if ($acao === 'detalhes_caixa') {
-        $caixaId = intval($_GET['caixa_id'] ?? 0);
+        jb_require_login('adm');
+
+        $caixaId = filter_input(INPUT_GET, 'caixa_id', FILTER_VALIDATE_INT) ?: 0;
 
         if ($caixaId <= 0) {
-            echo json_encode([
+            jb_json_response([
                 'success' => false,
                 'message' => 'Caixa inválido.'
             ]);
-            exit;
         }
 
         $caixa = $usuarioDAO->buscarPorId($caixaId);
+
+        if (!$caixa || ($caixa['tipo'] ?? '') !== 'caixa') {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Caixa não encontrado.'
+            ]);
+        }
+
         $turno = $turnoDAO->buscarTurnoHoje($caixaId);
         $resumo = $turnoDAO->buscarResumoOperacional($caixaId);
-        $pausas = $turno ? $turnoDAO->listarPausasDoTurno($turno['id']) : [];
+        $pausas = $turno ? $turnoDAO->listarPausasDoTurno((int) $turno['id']) : [];
 
-        echo json_encode([
+        jb_json_response([
             'success' => true,
             'caixa' => $caixa,
             'turno' => $turno ?? [
@@ -56,66 +68,91 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'resumo' => $resumo,
             'pausas' => $pausas
         ]);
-        exit;
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dados = json_decode(file_get_contents("php://input"), true);
-    $acao = $dados['acao'] ?? '';
+    jb_require_login('adm');
+
+    $dados = json_decode(file_get_contents('php://input'), true);
+
+    if (!is_array($dados)) {
+        jb_json_response([
+            'success' => false,
+            'message' => 'Dados inválidos.'
+        ]);
+    }
+
+    $acao = jb_sanitize_text($dados['acao'] ?? '', 50);
 
     if ($acao === 'cadastrar_caixa') {
-        $nome = trim($dados['nome'] ?? '');
-        $email = trim($dados['email'] ?? '');
-        $senha = trim($dados['senha'] ?? '');
+        $nome = jb_sanitize_text($dados['nome'] ?? '', 100);
+        $email = jb_email($dados['email'] ?? '');
+        $senha = (string) ($dados['senha'] ?? '');
 
-        if (empty($nome) || empty($email) || empty($senha)) {
-            echo json_encode([
+        if ($nome === '' || $email === '' || $senha === '') {
+            jb_json_response([
                 'success' => false,
                 'message' => 'Preencha todos os campos.'
             ]);
-            exit;
+        }
+
+        if (!jb_validate_nome($nome)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Nome inválido. Use apenas letras, espaços, apóstrofo, ponto ou hífen.'
+            ]);
+        }
+
+        if (!jb_validate_email($email)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'E-mail inválido.'
+            ]);
+        }
+
+        if (!jb_validate_senha_forte($senha)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Senha inválida. Use no mínimo 8 caracteres com maiúscula, minúscula, número e símbolo.'
+            ]);
         }
 
         if ($usuarioDAO->buscarPorEmail($email)) {
-            echo json_encode([
+            jb_json_response([
                 'success' => false,
                 'message' => 'E-mail já cadastrado.'
             ]);
-            exit;
         }
 
         $usuarioDAO->cadastrarCaixa($nome, $email, $senha);
 
-        echo json_encode([
+        jb_json_response([
             'success' => true,
             'message' => 'Caixa cadastrado com sucesso.'
         ]);
-        exit;
     }
 
     if ($acao === 'excluir_caixa') {
-        $id = intval($dados['id'] ?? 0);
+        $id = filter_var($dados['id'] ?? 0, FILTER_VALIDATE_INT) ?: 0;
 
         if ($id <= 0) {
-            echo json_encode([
+            jb_json_response([
                 'success' => false,
                 'message' => 'Caixa inválido.'
             ]);
-            exit;
         }
 
         $usuarioDAO->desativarCaixa($id);
 
-        echo json_encode([
+        jb_json_response([
             'success' => true,
             'message' => 'Caixa desativado com sucesso.'
         ]);
-        exit;
     }
 }
 
-echo json_encode([
+jb_json_response([
     'success' => false,
     'message' => 'Ação inválida.'
 ]);

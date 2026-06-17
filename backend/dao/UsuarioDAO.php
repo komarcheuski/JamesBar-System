@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/Usuario.php';
 
 class UsuarioDAO {
 
@@ -19,7 +20,9 @@ class UsuarioDAO {
                 tentativas_login,
                 bloqueio_login_until,
                 mfa_secret,
-                mfa_ativo
+                mfa_secret_key,
+                mfa_ativo,
+                created_at
             FROM usuarios
             WHERE email = :email
             LIMIT 1
@@ -29,7 +32,9 @@ class UsuarioDAO {
         $stmt->bindParam(':email', $email);
         $stmt->execute();
 
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $dados = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $dados ? Usuario::fromArray($dados) : false;
     }
 
     public function buscarPorId($id) {
@@ -47,7 +52,9 @@ class UsuarioDAO {
                 tentativas_login,
                 bloqueio_login_until,
                 mfa_secret,
-                mfa_ativo
+                mfa_secret_key,
+                mfa_ativo,
+                created_at
             FROM usuarios
             WHERE id = :id
             LIMIT 1
@@ -57,7 +64,9 @@ class UsuarioDAO {
         $stmt->bindParam(':id', $id);
         $stmt->execute();
 
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $dados = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $dados ? Usuario::fromArray($dados) : false;
     }
 
     public function listarCaixas() {
@@ -79,7 +88,13 @@ class UsuarioDAO {
         $stmt = $conn->prepare($sql);
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $caixas = [];
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $dados) {
+            $caixas[] = Usuario::fromArray($dados);
+        }
+
+        return $caixas;
     }
 
     public function cadastrarCaixa($nome, $email, $senha) {
@@ -158,12 +173,33 @@ class UsuarioDAO {
 
         $sql = "
             UPDATE usuarios
-            SET mfa_secret = :secret
+            SET
+                mfa_secret = :secret,
+                mfa_secret_key = NULL
             WHERE id = :id
         ";
 
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(':secret', $secret);
+        $stmt->bindParam(':id', $usuarioId);
+
+        return $stmt->execute();
+    }
+
+    public function salvarMfaSecretCriptografado($usuarioId, $secretCriptografado, $chaveCriptografada) {
+        $conn = Database::conectar();
+
+        $sql = "
+            UPDATE usuarios
+            SET
+                mfa_secret = :secret,
+                mfa_secret_key = :secret_key
+            WHERE id = :id
+        ";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':secret', $secretCriptografado);
+        $stmt->bindParam(':secret_key', $chaveCriptografada);
         $stmt->bindParam(':id', $usuarioId);
 
         return $stmt->execute();
@@ -194,7 +230,6 @@ class UsuarioDAO {
         ";
 
         $stmt = $conn->prepare($sql);
-
         $stmt->bindParam(':tentativas', $tentativas);
         $stmt->bindParam(':id', $usuarioId);
 
@@ -213,7 +248,6 @@ class UsuarioDAO {
         ";
 
         $stmt = $conn->prepare($sql);
-
         $stmt->bindParam(':bloqueio', $bloqueioAte);
         $stmt->bindParam(':id', $usuarioId);
 
@@ -232,7 +266,6 @@ class UsuarioDAO {
         ";
 
         $stmt = $conn->prepare($sql);
-
         $stmt->bindParam(':id', $usuarioId);
 
         return $stmt->execute();

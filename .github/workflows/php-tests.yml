@@ -1,0 +1,39 @@
+name: PHP Unit Tests
+
+on:
+  push:
+    branches:
+      - main
+      - andre-branch
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, openssl, pdo, pdo_mysql, zip, dom, xml, xmlwriter
+          coverage: none
+
+      - name: Validar composer.json
+        run: composer validate --no-check-publish
+
+      - name: Instalar dependências
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Rodar testes unitários
+        run: vendor/bin/phpunit --configuration phpunit.xml

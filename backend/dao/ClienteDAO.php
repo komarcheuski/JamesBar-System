@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/Cliente.php';
 
 class ClienteDAO {
 
@@ -13,6 +14,7 @@ class ClienteDAO {
                 nome,
                 cpf,
                 data_aniversario,
+                data_cadastro,
                 dentro_balada,
                 total_entradas
             FROM clientes
@@ -24,7 +26,9 @@ class ClienteDAO {
         $stmt->bindParam(':cpf', $cpf);
         $stmt->execute();
 
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $dados = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $dados ? Cliente::fromArray($dados) : false;
     }
 
     public function cadastrar($nome, $cpf, $dataAniversario) {
@@ -43,11 +47,9 @@ class ClienteDAO {
         ";
 
         $stmt = $conn->prepare($sql);
-
         $stmt->bindParam(':nome', $nome);
         $stmt->bindParam(':cpf', $cpf);
         $stmt->bindParam(':data_aniversario', $dataAniversario);
-
         $stmt->execute();
 
         return $conn->lastInsertId();

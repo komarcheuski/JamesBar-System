@@ -7,6 +7,7 @@ header("Content-Type: application/json");
 require_once __DIR__ . '/../dao/UsuarioDAO.php';
 require_once __DIR__ . '/../dao/TurnoDAO.php';
 require_once __DIR__ . '/../security/TotpService.php';
+require_once __DIR__ . '/../security/SecurityHelper.php';
 
 $usuarioDAO = new UsuarioDAO();
 $turnoDAO = new TurnoDAO();
@@ -15,99 +16,164 @@ $totpService = new TotpService();
 $limiteTentativas = 5;
 $minutosBloqueio = 10;
 
+function resposta_json($dados) {
+    echo json_encode($dados);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $acao = $_GET['acao'] ?? '';
 
     if ($acao === 'mfa_status') {
         if (!isset($_SESSION['mfa_usuario_id'])) {
-            echo json_encode([
+            resposta_json([
                 "success" => false,
                 "message" => "Sessão MFA não encontrada."
             ]);
-            exit;
         }
 
         $usuario = $usuarioDAO->buscarPorId($_SESSION['mfa_usuario_id']);
 
         if (!$usuario) {
-            echo json_encode([
+            resposta_json([
                 "success" => false,
                 "message" => "Usuário não encontrado."
             ]);
-            exit;
         }
 
         if (empty($usuario['mfa_secret'])) {
             $secret = $totpService->gerarSecret();
-            $usuarioDAO->salvarMfaSecret($usuario['id'], $secret);
-            $usuario['mfa_secret'] = $secret;
+
+            $criptografia = SecurityHelper::criptografarMfaSecret($secret);
+
+            $usuarioDAO->salvarMfaSecretCriptografado(
+                $usuario['id'],
+                $criptografia['mfa_secret'],
+                $criptografia['mfa_secret_key']
+            );
+
+            $secretParaExibir = $secret;
+        } else {
+            $secretParaExibir = SecurityHelper::descriptografarMfaSecret(
+                $usuario['mfa_secret'],
+                $usuario['mfa_secret_key'] ?? null
+            );
+
+            if ($secretParaExibir === '') {
+                resposta_json([
+                    "success" => false,
+                    "message" => "Erro ao descriptografar MFA."
+                ]);
+            }
+
+            if (empty($usuario['mfa_secret_key'])) {
+                $criptografia = SecurityHelper::criptografarMfaSecret($secretParaExibir);
+
+                $usuarioDAO->salvarMfaSecretCriptografado(
+                    $usuario['id'],
+                    $criptografia['mfa_secret'],
+                    $criptografia['mfa_secret_key']
+                );
+            }
         }
 
-        echo json_encode([
+        resposta_json([
             "success" => true,
             "mfa_ativo" => (bool) $usuario['mfa_ativo'],
-            "qr_code_url" => $usuario['mfa_ativo'] ? null : $totpService->gerarQrCodeUrl($usuario['email'], $usuario['mfa_secret']),
-            "secret" => $usuario['mfa_ativo'] ? null : $usuario['mfa_secret'],
+            "qr_code_url" => $usuario['mfa_ativo'] ? null : $totpService->gerarQrCodeUrl($usuario['email'], $secretParaExibir),
+            "secret" => $usuario['mfa_ativo'] ? null : $secretParaExibir,
             "email" => $usuario['email']
         ]);
-        exit;
     }
 }
 
 $dados = json_decode(file_get_contents("php://input"), true);
 
-if (!$dados) {
-    echo json_encode([
+if (!is_array($dados)) {
+    resposta_json([
         "success" => false,
         "message" => "Dados inválidos."
     ]);
-    exit;
 }
 
-$acao = $dados['acao'] ?? 'login';
+$acao = trim($dados['acao'] ?? 'login');
+
+if ($acao === 'verificar_sessao') {
+    if (isset($_SESSION['usuario_id'])) {
+        resposta_json([
+            "success" => true,
+            "usuario_id" => $_SESSION['usuario_id'],
+            "usuario_tipo" => $_SESSION['usuario_tipo'],
+            "usuario_nome" => $_SESSION['usuario_nome'] ?? ''
+        ]);
+    }
+
+    if (isset($_SESSION['mfa_usuario_id'])) {
+        resposta_json([
+            "success" => true,
+            "mfa_pendente" => true,
+            "message" => "Sessão MFA ativa."
+        ]);
+    }
+
+    if (isset($_SESSION['troca_senha_usuario_id'])) {
+        resposta_json([
+            "success" => true,
+            "troca_senha_pendente" => true,
+            "message" => "Sessão de troca de senha ativa."
+        ]);
+    }
+
+    resposta_json([
+        "success" => false,
+        "message" => "Usuário não logado."
+    ]);
+}
 
 if ($acao === 'login') {
-    $email = trim($dados["email"] ?? "");
+    $email = filter_var(trim($dados["email"] ?? ""), FILTER_SANITIZE_EMAIL);
     $senha = trim($dados["senha"] ?? "");
 
-    if (empty($email) || empty($senha)) {
-        echo json_encode([
+    if ($email === '' || $senha === '') {
+        resposta_json([
             "success" => false,
             "message" => "E-mail e senha são obrigatórios."
         ]);
-        exit;
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        resposta_json([
+            "success" => false,
+            "message" => "E-mail inválido."
+        ]);
     }
 
     $usuario = $usuarioDAO->buscarPorEmail($email);
 
     if (!$usuario) {
-        echo json_encode([
+        resposta_json([
             "success" => false,
             "message" => "Usuário não encontrado."
         ]);
-        exit;
     }
 
     if (!$usuario["ativo"]) {
-        echo json_encode([
+        resposta_json([
             "success" => false,
             "message" => "Usuário inativo."
         ]);
-        exit;
     }
 
     if (!empty($usuario["bloqueio_login_until"])) {
         $bloqueioAte = strtotime($usuario["bloqueio_login_until"]);
 
         if ($bloqueioAte > time()) {
-            $segundosRestantes = $bloqueioAte - time();
-            $minutosRestantes = ceil($segundosRestantes / 60);
+            $minutosRestantes = ceil(($bloqueioAte - time()) / 60);
 
-            echo json_encode([
+            resposta_json([
                 "success" => false,
                 "message" => "Conta bloqueada temporariamente. Tente novamente em aproximadamente {$minutosRestantes} minuto(s)."
             ]);
-            exit;
         }
     }
 
@@ -116,35 +182,24 @@ if ($acao === 'login') {
         $novasTentativas = $tentativasAtuais + 1;
 
         if ($novasTentativas >= $limiteTentativas) {
-            $bloqueioAte = date(
-                'Y-m-d H:i:s',
-                time() + ($minutosBloqueio * 60)
-            );
+            $bloqueioAte = date('Y-m-d H:i:s', time() + ($minutosBloqueio * 60));
 
-            $usuarioDAO->bloquearLoginTemporariamente(
-                $usuario["id"],
-                $bloqueioAte
-            );
+            $usuarioDAO->bloquearLoginTemporariamente($usuario["id"], $bloqueioAte);
 
-            echo json_encode([
+            resposta_json([
                 "success" => false,
                 "message" => "Senha incorreta. A conta foi bloqueada por {$minutosBloqueio} minutos após {$limiteTentativas} tentativas inválidas."
             ]);
-            exit;
         }
 
-        $usuarioDAO->atualizarTentativasLogin(
-            $usuario["id"],
-            $novasTentativas
-        );
+        $usuarioDAO->atualizarTentativasLogin($usuario["id"], $novasTentativas);
 
         $tentativasRestantes = $limiteTentativas - $novasTentativas;
 
-        echo json_encode([
+        resposta_json([
             "success" => false,
             "message" => "Senha incorreta. Tentativas restantes: {$tentativasRestantes}."
         ]);
-        exit;
     }
 
     $usuarioDAO->limparTentativasLogin($usuario["id"]);
@@ -153,94 +208,90 @@ if ($acao === 'login') {
         $_SESSION["troca_senha_usuario_id"] = $usuario["id"];
         $_SESSION["troca_senha_usuario_tipo"] = $usuario["tipo"];
 
-        echo json_encode([
+        resposta_json([
             "success" => true,
             "primeiro_acesso" => true,
             "message" => "Primeiro acesso detectado. Troque sua senha para continuar.",
             "redirect" => "trocar_senha.html"
         ]);
-        exit;
     }
 
     if ($usuario["tipo"] === "adm") {
         $_SESSION["mfa_usuario_id"] = $usuario["id"];
 
-        echo json_encode([
+        resposta_json([
             "success" => true,
             "require_mfa" => true,
             "redirect" => "mfa.html",
             "message" => "Confirme o MFA para continuar."
         ]);
-        exit;
     }
 
     if ($usuario["tipo"] === "caixa") {
         $turnoHoje = $turnoDAO->buscarTurnoHoje($usuario["id"]);
 
         if ($turnoHoje && $turnoHoje["status"] === "fechado") {
-            echo json_encode([
+            resposta_json([
                 "success" => false,
                 "message" => "Seu turno já foi encerrado hoje. Novo acesso somente no próximo dia."
             ]);
-            exit;
         }
 
         $turnoDAO->abrirOuRetomarTurno($usuario["id"]);
     }
 
     $_SESSION["usuario_id"] = $usuario["id"];
-    $_SESSION["usuario_nome"] = $usuario["nome"];
-    $_SESSION["usuario_email"] = $usuario["email"];
+    $_SESSION["usuario_nome"] = htmlspecialchars($usuario["nome"], ENT_QUOTES, 'UTF-8');
+    $_SESSION["usuario_email"] = htmlspecialchars($usuario["email"], ENT_QUOTES, 'UTF-8');
     $_SESSION["usuario_tipo"] = $usuario["tipo"];
     $_SESSION["last_activity"] = time();
 
-    echo json_encode([
+    $redirect = $usuario["tipo"] === "adm"
+        ? "../adm/dashboardAdm.html"
+        : "../caixa/dashboardCaixa.html";
+
+    resposta_json([
         "success" => true,
         "message" => "Login realizado com sucesso.",
-        "redirect" => "../caixa/dashboardCaixa.html",
+        "redirect" => $redirect,
         "usuario" => [
             "id" => $usuario["id"],
-            "nome" => $usuario["nome"],
+            "nome" => htmlspecialchars($usuario["nome"], ENT_QUOTES, 'UTF-8'),
             "tipo" => $usuario["tipo"]
         ]
     ]);
-    exit;
 }
 
 if ($acao === 'trocar_senha_primeiro_acesso') {
     if (!isset($_SESSION['troca_senha_usuario_id'])) {
-        echo json_encode([
+        resposta_json([
             "success" => false,
             "message" => "Sessão expirada. Faça login novamente."
         ]);
-        exit;
     }
 
     $novaSenha = trim($dados['nova_senha'] ?? '');
     $confirmarSenha = trim($dados['confirmar_senha'] ?? '');
 
-    if (empty($novaSenha) || empty($confirmarSenha)) {
-        echo json_encode([
+    if ($novaSenha === '' || $confirmarSenha === '') {
+        resposta_json([
             "success" => false,
             "message" => "Preencha todos os campos."
         ]);
-        exit;
     }
 
     if ($novaSenha !== $confirmarSenha) {
-        echo json_encode([
+        resposta_json([
             "success" => false,
             "message" => "As senhas não coincidem."
         ]);
-        exit;
     }
 
-    if (strlen($novaSenha) < 6) {
-        echo json_encode([
+    if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/', $novaSenha)) {
+        resposta_json([
             "success" => false,
-            "message" => "A nova senha deve ter no mínimo 6 caracteres."
+            "message" => "A senha precisa ser forte: mínimo 8 caracteres, maiúscula, minúscula, número e símbolo."
         ]);
-        exit;
     }
 
     $usuarioId = $_SESSION['troca_senha_usuario_id'];
@@ -252,40 +303,56 @@ if ($acao === 'trocar_senha_primeiro_acesso') {
 
     session_destroy();
 
-    echo json_encode([
+    resposta_json([
         "success" => true,
         "message" => "Senha alterada com sucesso. Faça login novamente.",
         "redirect" => "login.html"
     ]);
-    exit;
 }
 
 if ($acao === 'verificar_mfa') {
     if (!isset($_SESSION['mfa_usuario_id'])) {
-        echo json_encode([
+        resposta_json([
             "success" => false,
             "message" => "Sessão MFA expirada. Faça login novamente."
         ]);
-        exit;
     }
 
     $codigo = trim($dados['codigo'] ?? '');
+
+    if (!preg_match('/^\d{6}$/', $codigo)) {
+        resposta_json([
+            "success" => false,
+            "message" => "Código MFA inválido. Digite os 6 números."
+        ]);
+    }
+
     $usuario = $usuarioDAO->buscarPorId($_SESSION['mfa_usuario_id']);
 
     if (!$usuario || $usuario['tipo'] !== 'adm') {
-        echo json_encode([
+        resposta_json([
             "success" => false,
             "message" => "Usuário inválido para MFA."
         ]);
-        exit;
     }
 
-    if (!$totpService->verificarCodigo($usuario['mfa_secret'], $codigo)) {
-        echo json_encode([
+    $secretDescriptografado = SecurityHelper::descriptografarMfaSecret(
+        $usuario['mfa_secret'],
+        $usuario['mfa_secret_key'] ?? null
+    );
+
+    if ($secretDescriptografado === '') {
+        resposta_json([
+            "success" => false,
+            "message" => "Erro ao descriptografar MFA."
+        ]);
+    }
+
+    if (!$totpService->verificarCodigo($secretDescriptografado, $codigo)) {
+        resposta_json([
             "success" => false,
             "message" => "Código MFA inválido."
         ]);
-        exit;
     }
 
     if (!$usuario['mfa_ativo']) {
@@ -293,19 +360,18 @@ if ($acao === 'verificar_mfa') {
     }
 
     $_SESSION["usuario_id"] = $usuario["id"];
-    $_SESSION["usuario_nome"] = $usuario["nome"];
-    $_SESSION["usuario_email"] = $usuario["email"];
+    $_SESSION["usuario_nome"] = htmlspecialchars($usuario["nome"], ENT_QUOTES, 'UTF-8');
+    $_SESSION["usuario_email"] = htmlspecialchars($usuario["email"], ENT_QUOTES, 'UTF-8');
     $_SESSION["usuario_tipo"] = $usuario["tipo"];
     $_SESSION["last_activity"] = time();
 
     unset($_SESSION['mfa_usuario_id']);
 
-    echo json_encode([
+    resposta_json([
         "success" => true,
         "message" => "MFA validado com sucesso.",
         "redirect" => "../adm/dashboardAdm.html"
     ]);
-    exit;
 }
 
 if ($acao === 'logout_inatividade') {
@@ -316,27 +382,25 @@ if ($acao === 'logout_inatividade') {
     session_unset();
     session_destroy();
 
-    echo json_encode([
+    resposta_json([
         "success" => true,
         "message" => "Sessão encerrada por inatividade.",
         "redirect" => "../auth/login.html?motivo=inatividade"
     ]);
-    exit;
 }
 
 if ($acao === 'logout') {
     session_unset();
     session_destroy();
 
-    echo json_encode([
+    resposta_json([
         "success" => true,
         "message" => "Logout realizado com sucesso.",
         "redirect" => "../auth/login.html"
     ]);
-    exit;
 }
 
-echo json_encode([
+resposta_json([
     "success" => false,
     "message" => "Ação inválida."
 ]);

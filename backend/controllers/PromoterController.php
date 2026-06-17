@@ -1,367 +1,256 @@
 <?php
 
-
-
 session_start();
-
-
 
 header('Content-Type: application/json');
 
-
-
 require_once __DIR__ . '/../dao/PromoterDAO.php';
-
-
+require_once __DIR__ . '/../security/SecurityHelper.php';
 
 $promoterDAO = new PromoterDAO();
 
-
-
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    jb_require_login('adm');
 
-    $acao = $_GET['acao'] ?? '';
-
-
+    $acao = jb_sanitize_text($_GET['acao'] ?? '', 50);
 
     if ($acao === 'listar_promoters') {
-
-        echo json_encode([
-
+        jb_json_response([
             'success' => true,
-
             'promoters' => $promoterDAO->listarTodos()
-
         ]);
-
-        exit;
-
     }
-
-
 
     if ($acao === 'listar_dias') {
-
-        echo json_encode([
-
+        jb_json_response([
             'success' => true,
-
             'dias' => $promoterDAO->listarDias()
-
         ]);
-
-        exit;
-
     }
-
-
 
     if ($acao === 'listar_listas_promoters') {
+        $diaId = filter_input(INPUT_GET, 'dia_id', FILTER_VALIDATE_INT) ?: null;
 
-        $diaId = $_GET['dia_id'] ?? null;
-
-
-
-        echo json_encode([
-
+        jb_json_response([
             'success' => true,
-
             'listas' => $promoterDAO->listarListasPromoters($diaId)
-
         ]);
-
-        exit;
-
     }
-
-
 
     if ($acao === 'listar_listas_aniversario') {
-
-        echo json_encode([
-
+        jb_json_response([
             'success' => true,
-
             'listas' => $promoterDAO->listarListasAniversario()
-
         ]);
-
-        exit;
-
     }
-
-
 
     if ($acao === 'status_envio') {
+        $dataEvento = jb_sanitize_text($_GET['data_evento'] ?? date('Y-m-d'), 10);
 
-        $dataEvento = $_GET['data_evento'] ?? date('Y-m-d');
-
-
-
-        echo json_encode([
-
-            'success' => true,
-
-            'status' => $promoterDAO->statusEnvioPromoters($dataEvento)
-
-        ]);
-
-        exit;
-
-    }
-
-}
-
-
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    $dados = json_decode(file_get_contents("php://input"), true);
-
-    $acao = $dados['acao'] ?? '';
-
-
-
-    if ($acao === 'cadastrar_promoter') {
-
-        $nome = trim($dados['nome'] ?? '');
-
-        $telefone = trim($dados['telefone'] ?? '');
-
-        $dias = $dados['dias'] ?? [];
-
-
-
-        if ($nome === '') {
-
-            echo json_encode([
-
-                'success' => false,
-
-                'message' => 'Nome obrigatório.'
-
-            ]);
-
-            exit;
-
+        if (!jb_validate_date($dataEvento)) {
+            $dataEvento = date('Y-m-d');
         }
 
+        jb_json_response([
+            'success' => true,
+            'status' => $promoterDAO->statusEnvioPromoters($dataEvento)
+        ]);
+    }
+}
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    jb_require_login('adm');
+
+    $dados = json_decode(file_get_contents('php://input'), true);
+
+    if (!is_array($dados)) {
+        jb_json_response([
+            'success' => false,
+            'message' => 'Dados inválidos.'
+        ]);
+    }
+
+    $acao = jb_sanitize_text($dados['acao'] ?? '', 50);
+
+    if ($acao === 'cadastrar_promoter') {
+        $nome = jb_sanitize_text($dados['nome'] ?? '', 100);
+        $telefone = jb_sanitize_text($dados['telefone'] ?? '', 20);
+        $dias = is_array($dados['dias'] ?? null) ? $dados['dias'] : [];
+
+        if ($nome === '') {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Nome obrigatório.'
+            ]);
+        }
+
+        if (!jb_validate_nome($nome)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Nome inválido.'
+            ]);
+        }
+
+        if (!jb_validate_telefone($telefone)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Telefone inválido.'
+            ]);
+        }
+
+        if (!jb_validate_dias($dias)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Dias inválidos.'
+            ]);
+        }
 
         $promoterDAO->cadastrarPromoter($nome, $telefone, $dias);
 
-
-
-        echo json_encode([
-
+        jb_json_response([
             'success' => true,
-
             'message' => 'Promoter cadastrado com sucesso.'
-
         ]);
-
-        exit;
-
     }
 
-
-
     if ($acao === 'editar_promoter') {
-
-        $id = intval($dados['id'] ?? 0);
-
-        $nome = trim($dados['nome'] ?? '');
-
-        $telefone = trim($dados['telefone'] ?? '');
-
-        $dias = $dados['dias'] ?? [];
-
-
+        $id = filter_var($dados['id'] ?? 0, FILTER_VALIDATE_INT) ?: 0;
+        $nome = jb_sanitize_text($dados['nome'] ?? '', 100);
+        $telefone = jb_sanitize_text($dados['telefone'] ?? '', 20);
+        $dias = is_array($dados['dias'] ?? null) ? $dados['dias'] : [];
 
         if ($id <= 0 || $nome === '') {
-
-            echo json_encode([
-
+            jb_json_response([
                 'success' => false,
-
                 'message' => 'Dados inválidos.'
-
             ]);
-
-            exit;
-
         }
 
+        if (!jb_validate_nome($nome)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Nome inválido.'
+            ]);
+        }
 
+        if (!jb_validate_telefone($telefone)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Telefone inválido.'
+            ]);
+        }
+
+        if (!jb_validate_dias($dias)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Dias inválidos.'
+            ]);
+        }
 
         $promoterDAO->editarPromoter($id, $nome, $telefone, $dias);
 
-
-
-        echo json_encode([
-
+        jb_json_response([
             'success' => true,
-
             'message' => 'Promoter atualizado com sucesso.'
-
         ]);
-
-        exit;
-
     }
 
-
-
     if ($acao === 'excluir_promoter') {
-
-        $id = intval($dados['id'] ?? 0);
-
-
+        $id = filter_var($dados['id'] ?? 0, FILTER_VALIDATE_INT) ?: 0;
 
         if ($id <= 0) {
-
-            echo json_encode([
-
+            jb_json_response([
                 'success' => false,
-
                 'message' => 'Promoter inválido.'
-
             ]);
-
-            exit;
-
         }
-
-
 
         $promoterDAO->excluirPromoter($id);
 
-
-
-        echo json_encode([
-
+        jb_json_response([
             'success' => true,
-
             'message' => 'Promoter excluído com sucesso.'
-
         ]);
-
-        exit;
-
     }
-
-
 
     if ($acao === 'cadastrar_lista_promoter') {
-
-        $promoterId = intval($dados['promoter_id'] ?? 0);
-
-        $diaId = intval($dados['dia_id'] ?? 0);
-
-        $dataLista = trim($dados['data_lista'] ?? '');
-
-        $convidados = $dados['convidados'] ?? [];
-
-        $vips = $dados['vips'] ?? [];
-
-
+        $promoterId = filter_var($dados['promoter_id'] ?? 0, FILTER_VALIDATE_INT) ?: 0;
+        $diaId = filter_var($dados['dia_id'] ?? 0, FILTER_VALIDATE_INT) ?: 0;
+        $dataLista = jb_sanitize_text($dados['data_lista'] ?? '', 10);
+        $convidados = is_array($dados['convidados'] ?? null) ? jb_sanitize_pessoas($dados['convidados'], 5) : [];
+        $vips = is_array($dados['vips'] ?? null) ? jb_sanitize_pessoas($dados['vips'], 20) : [];
 
         if ($promoterId <= 0 || $diaId <= 0 || $dataLista === '') {
-
-            echo json_encode([
-
+            jb_json_response([
                 'success' => false,
-
                 'message' => 'Preencha promoter, dia e data da lista.'
-
             ]);
-
-            exit;
-
         }
 
+        if (!jb_validate_date($dataLista)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Data da lista inválida.'
+            ]);
+        }
 
-
-        echo json_encode(
-
+        jb_json_response(
             $promoterDAO->cadastrarListaPromoter(
-
                 $promoterId,
-
                 $diaId,
-
                 $dataLista,
-
                 $convidados,
-
                 $vips
-
             )
-
         );
-
-        exit;
-
     }
-
-
 
     if ($acao === 'cadastrar_lista_aniversario') {
-
-        $nome = trim($dados['aniversariante_nome'] ?? '');
-
-        $cpf = trim($dados['aniversariante_cpf'] ?? '');
-
-        $dataEvento = trim($dados['data_evento'] ?? '');
-
-        $convidados = $dados['convidados'] ?? [];
-
-
+        $nome = jb_sanitize_text($dados['aniversariante_nome'] ?? '', 100);
+        $cpf = jb_sanitize_cpf($dados['aniversariante_cpf'] ?? '');
+        $dataEvento = jb_sanitize_text($dados['data_evento'] ?? '', 10);
+        $convidados = is_array($dados['convidados'] ?? null) ? jb_sanitize_pessoas($dados['convidados'], 20) : [];
 
         if ($nome === '' || $dataEvento === '') {
-
-            echo json_encode([
-
+            jb_json_response([
                 'success' => false,
-
                 'message' => 'Nome do aniversariante e data do evento são obrigatórios.'
-
             ]);
-
-            exit;
-
         }
 
+        if (!jb_validate_nome($nome)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Nome do aniversariante inválido.'
+            ]);
+        }
 
+        if ($cpf !== '' && !jb_validate_cpf($cpf)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'CPF do aniversariante inválido.'
+            ]);
+        }
 
-        echo json_encode(
+        if (!jb_validate_date($dataEvento)) {
+            jb_json_response([
+                'success' => false,
+                'message' => 'Data do evento inválida.'
+            ]);
+        }
 
+        jb_json_response(
             $promoterDAO->cadastrarListaAniversario(
-
                 $nome,
-
                 $cpf,
-
                 $dataEvento,
-
                 $convidados
-
             )
-
         );
-
-        exit;
-
     }
-
 }
 
-
-
-echo json_encode([
-
+jb_json_response([
     'success' => false,
-
     'message' => 'Ação inválida.'
-
 ]);

@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/Promoter.php';
+require_once __DIR__ . '/../models/Lista.php';
 
 class PromoterDAO {
 
@@ -32,7 +34,13 @@ class PromoterDAO {
         $stmt = $conn->prepare($sql);
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $promoters = [];
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $dados) {
+            $promoters[] = Promoter::fromArray($dados);
+        }
+
+        return $promoters;
     }
 
     public function listarDias() {
@@ -376,7 +384,13 @@ class PromoterDAO {
 
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $listas = [];
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $dados) {
+            $listas[] = Lista::fromArray($dados);
+        }
+
+        return $listas;
     }
 
     public function listarListasAniversario() {
@@ -403,7 +417,13 @@ class PromoterDAO {
         $stmt = $conn->prepare($sql);
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $listas = [];
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $dados) {
+            $listas[] = Lista::fromArray($dados);
+        }
+
+        return $listas;
     }
 
     public function statusEnvioPromoters($dataEvento) {

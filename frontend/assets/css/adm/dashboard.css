@@ -17,10 +17,10 @@ body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background-image: url("../../img/background04.jpg");
+    background-image: url("../../img/background02.jpg");
     background-size: cover;
     background-position: center;
-    filter: blur(1px);
+    filter: blur(4px);
     transform: scale(1.1);
     z-index: -2;
 }
@@ -29,13 +29,7 @@ body::after {
     content: "";
     position: fixed;
     inset: 0;
-    background:
-        linear-gradient(
-            135deg,
-            var(--overlay-black),
-            var(--overlay-red),
-            var(--overlay-purple)
-        );
+    background: linear-gradient(135deg, var(--overlay-black), var(--overlay-red), var(--overlay-purple));
     z-index: -1;
 }
 
@@ -55,9 +49,7 @@ body::after {
     color: var(--color-white);
     font-size: 30px;
     letter-spacing: 1px;
-    text-shadow:
-        0 0 15px var(--color-primary),
-        0 0 30px var(--color-secondary);
+    text-shadow: 0 0 15px var(--color-primary), 0 0 30px var(--color-secondary);
 }
 
 .dia-atual {
@@ -108,9 +100,7 @@ body::after {
 .btn-adm:hover,
 .btn-sair:hover {
     transform: translateY(-2px) scale(1.03);
-    box-shadow:
-        0 0 15px var(--glow-primary),
-        0 0 28px var(--glow-secondary);
+    box-shadow: 0 0 15px var(--glow-primary), 0 0 28px var(--glow-secondary);
 }
 
 .btn-sair {
@@ -146,13 +136,12 @@ body::after {
 .listas-area {
     width: 100%;
     max-width: 1000px;
+    padding: 32px;
     background: rgba(15, 15, 15, 0.18);
     border-radius: 25px;
     border: 1px solid rgba(255, 0, 80, 0.4);
     backdrop-filter: blur(10px);
-    box-shadow:
-        0 0 30px var(--shadow-primary),
-        0 0 60px var(--shadow-secondary);
+    box-shadow: 0 0 30px var(--shadow-primary), 0 0 60px var(--shadow-secondary);
 }
 
 .adm-card {
@@ -160,23 +149,20 @@ body::after {
     text-align: center;
 }
 
-.caixas-area,
-.promoters-area,
-.listas-area {
-    padding: 32px;
-}
-
 .adm-card h2,
 .caixas-topo h2 {
     color: var(--color-white);
-    text-shadow:
-        0 0 15px var(--color-primary),
-        0 0 30px var(--color-secondary);
+    text-shadow: 0 0 15px var(--color-primary), 0 0 30px var(--color-secondary);
 }
 
 .adm-card h2 {
     font-size: 38px;
     margin-bottom: 14px;
+}
+
+.caixas-topo h2 {
+    font-size: 28px;
+    margin-bottom: 8px;
 }
 
 .adm-card p,
@@ -193,23 +179,13 @@ body::after {
     gap: 20px;
 }
 
-.caixas-topo h2 {
-    font-size: 28px;
-    margin-bottom: 8px;
-}
-
 .btn-novo-caixa,
 .btn-confirmar,
 .btn-ver-lista {
     padding: 15px 24px;
     border: none;
     border-radius: 14px;
-    background:
-        linear-gradient(
-            90deg,
-            var(--color-primary),
-            var(--color-secondary)
-        );
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
     color: var(--color-white);
     font-size: 14px;
     font-weight: bold;
@@ -221,9 +197,7 @@ body::after {
 .btn-confirmar:hover,
 .btn-ver-lista:hover {
     transform: translateY(-2px);
-    box-shadow:
-        0 0 15px var(--glow-primary),
-        0 0 25px var(--glow-secondary);
+    box-shadow: 0 0 15px var(--glow-primary), 0 0 25px var(--glow-secondary);
 }
 
 .lista-caixas {
@@ -238,17 +212,8 @@ body::after {
     border-radius: 18px;
     background: rgba(15, 15, 15, 0.65);
     border: 1px solid rgba(255, 0, 80, 0.28);
-    box-shadow:
-        0 0 16px rgba(0, 0, 0, 0.35),
-        0 0 25px rgba(255, 0, 80, 0.12);
+    box-shadow: 0 0 16px rgba(0, 0, 0, 0.35), 0 0 25px rgba(255, 0, 80, 0.12);
     transition: 0.3s;
-}
-
-.lista-promoter-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 18px;
 }
 
 .caixa-item:hover,
@@ -280,6 +245,13 @@ body::after {
     display: flex;
     flex-direction: column;
     gap: 14px;
+}
+
+.lista-promoter-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
 }
 
 .status-caixa,
@@ -314,6 +286,7 @@ body::after {
 .caixa-botoes {
     display: flex;
     gap: 10px;
+    margin-top: 14px;
 }
 
 .caixa-botoes button {
@@ -334,6 +307,11 @@ body::after {
 
 .btn-excluir {
     background: linear-gradient(90deg, #8b0000, var(--color-primary));
+}
+
+.caixa-botoes button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 12px var(--glow-primary), 0 0 20px var(--glow-secondary);
 }
 
 .filtro-dia,
@@ -373,10 +351,12 @@ body::after {
     background: rgba(15, 15, 15, 0.96);
     border-radius: 24px;
     border: 1px solid rgba(255, 0, 80, 0.45);
-    box-shadow:
-        0 0 30px var(--shadow-primary),
-        0 0 60px var(--shadow-secondary);
+    box-shadow: 0 0 30px var(--shadow-primary), 0 0 60px var(--shadow-secondary);
     text-align: center;
+}
+
+.modal-detalhes {
+    max-width: 720px;
 }
 
 .modal-lista-grande {
@@ -387,9 +367,7 @@ body::after {
 .modal-card h3 {
     color: var(--color-white);
     margin-bottom: 20px;
-    text-shadow:
-        0 0 15px var(--color-primary),
-        0 0 30px var(--color-secondary);
+    text-shadow: 0 0 15px var(--color-primary), 0 0 30px var(--color-secondary);
 }
 
 .btn-fechar {
@@ -414,6 +392,7 @@ body::after {
 .btn-fechar:hover {
     background: rgba(255, 0, 60, 0.4);
     transform: scale(1.08);
+    box-shadow: 0 0 10px rgba(255, 0, 60, 0.5), 0 0 20px rgba(90, 24, 154, 0.4);
 }
 
 .input-group {
@@ -432,6 +411,7 @@ body::after {
 }
 
 .input-group input,
+.input-group select,
 .linha-nome-lista input {
     padding: 15px;
     border: none;
@@ -442,11 +422,10 @@ body::after {
 }
 
 .input-group input:focus,
+.input-group select:focus,
 .linha-nome-lista input:focus {
     border: 1px solid var(--color-primary);
-    box-shadow:
-        0 0 10px var(--glow-primary),
-        0 0 20px var(--glow-secondary);
+    box-shadow: 0 0 10px var(--glow-primary), 0 0 20px var(--glow-secondary);
 }
 
 .dias-promoter-form {
@@ -492,6 +471,72 @@ body::after {
     display: grid;
     grid-template-columns: 1fr 180px;
     gap: 10px;
+}
+
+.detalhes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.detalhe-box {
+    padding: 22px;
+    border-radius: 18px;
+    background: rgba(37, 37, 37, 0.75);
+    border: 1px solid rgba(255, 0, 80, 0.25);
+}
+
+.detalhe-box strong {
+    display: block;
+    color: var(--color-white);
+    font-size: 34px;
+    margin-bottom: 6px;
+    text-shadow: 0 0 15px var(--color-primary), 0 0 25px var(--color-secondary);
+}
+
+.detalhe-box span {
+    color: var(--color-light-gray);
+    font-size: 13px;
+}
+
+.turno-info {
+    text-align: left;
+    margin-bottom: 26px;
+    padding: 18px;
+    border-radius: 16px;
+    background: rgba(37, 37, 37, 0.65);
+}
+
+.turno-info p {
+    color: var(--color-light-gray);
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.turno-info strong {
+    color: var(--color-white);
+}
+
+.lista-pausas {
+    max-height: 190px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pausa-item {
+    padding: 13px;
+    border-radius: 12px;
+    background: rgba(37, 37, 37, 0.75);
+    color: var(--color-light-gray);
+    font-size: 13px;
+    text-align: left;
+}
+
+.pausa-item strong {
+    color: var(--color-white);
 }
 
 .mensagem-vazia {
@@ -563,10 +608,13 @@ body::after {
         font-size: 30px;
     }
 
-    .caixa-botoes,
+    .detalhes-grid,
     .dias-grid,
     .linha-nome-lista {
         grid-template-columns: 1fr;
+    }
+
+    .caixa-botoes {
         flex-direction: column;
     }
 

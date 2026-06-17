@@ -1,7 +1,9 @@
 DROP DATABASE IF EXISTS db_core;
 DROP DATABASE IF EXISTS db_listas_vip;
 
-CREATE DATABASE db_core;
+CREATE DATABASE db_core CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE db_listas_vip CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 USE db_core;
 
 CREATE TABLE usuarios (
@@ -14,7 +16,8 @@ CREATE TABLE usuarios (
     primeiro_acesso BOOLEAN NOT NULL DEFAULT TRUE,
     tentativas_login INT NOT NULL DEFAULT 0,
     bloqueio_login_until TIMESTAMP NULL DEFAULT NULL,
-    mfa_secret VARCHAR(255) NULL,
+    mfa_secret TEXT NULL,
+    mfa_secret_key TEXT NULL,
     mfa_ativo BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -60,7 +63,18 @@ CREATE TABLE movimentacoes (
     FOREIGN KEY (caixa_id) REFERENCES usuarios(id) ON DELETE RESTRICT
 );
 
+CREATE TABLE logs_sistema (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NULL,
+    acao VARCHAR(255) NOT NULL,
+    descricao TEXT NULL,
+    ip VARCHAR(45) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
 DELIMITER $$
+
 CREATE TRIGGER trg_movimentacoes_after_insert
 AFTER INSERT ON movimentacoes
 FOR EACH ROW
@@ -76,23 +90,34 @@ BEGIN
         WHERE id = NEW.cliente_id;
     END IF;
 END$$
+
 DELIMITER ;
 
-INSERT INTO usuarios (nome, email, senha_hash, tipo, primeiro_acesso) VALUES
-('Administrador','admin@jamesbar.com',MD5('admin123'),'adm',TRUE),
-('Caixa 01','caixa01@jamesbar.com',MD5('caixa01'),'caixa',TRUE),
-('Caixa 02','caixa02@jamesbar.com',MD5('caixa02'),'caixa',TRUE),
-('Caixa 03','caixa03@jamesbar.com',MD5('caixa03'),'caixa',TRUE),
-('Caixa 04','caixa04@jamesbar.com',MD5('caixa04'),'caixa',TRUE),
-('Caixa 05','caixa05@jamesbar.com',MD5('caixa05'),'caixa',TRUE),
-('Caixa 06','caixa06@jamesbar.com',MD5('caixa06'),'caixa',TRUE);
+INSERT INTO usuarios (
+    nome,
+    email,
+    senha_hash,
+    tipo,
+    primeiro_acesso,
+    tentativas_login,
+    bloqueio_login_until,
+    mfa_secret,
+    mfa_secret_key,
+    mfa_ativo
+) VALUES
+('Administrador','admin@jamesbar.com',MD5('admin123'),'adm',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 01','caixa01@jamesbar.com',MD5('caixa01'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 02','caixa02@jamesbar.com',MD5('caixa02'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 03','caixa03@jamesbar.com',MD5('caixa03'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 04','caixa04@jamesbar.com',MD5('caixa04'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 05','caixa05@jamesbar.com',MD5('caixa05'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 06','caixa06@jamesbar.com',MD5('caixa06'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE);
 
 INSERT INTO clientes (nome, cpf, data_aniversario) VALUES
 ('João da Silva','111.111.111-11','2000-05-10'),
 ('Maria Oliveira','222.222.222-22','1999-08-20'),
 ('Pedro Santos','333.333.333-33','2001-01-15');
 
-CREATE DATABASE db_listas_vip;
 USE db_listas_vip;
 
 CREATE TABLE dias_promoters (
@@ -101,7 +126,11 @@ CREATE TABLE dias_promoters (
 );
 
 INSERT INTO dias_promoters (id,nome) VALUES
-(1,'quarta'),(2,'quinta'),(3,'sexta'),(4,'sabado'),(5,'domingo');
+(1,'quarta'),
+(2,'quinta'),
+(3,'sexta'),
+(4,'sabado'),
+(5,'domingo');
 
 CREATE TABLE promoters (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -157,3 +186,32 @@ CREATE TABLE lista_aniversario_convidados (
     cpf VARCHAR(14),
     FOREIGN KEY (lista_aniversario_id) REFERENCES listas_aniversario(id) ON DELETE CASCADE
 );
+
+INSERT INTO promoters (
+    nome,
+    telefone,
+    lista_quarta,
+    lista_quinta,
+    lista_sexta,
+    lista_sabado,
+    lista_domingo
+) VALUES
+('Promoter Teste','41999999999',TRUE,TRUE,TRUE,TRUE,TRUE);
+
+SET GLOBAL event_scheduler = ON;
+
+DELIMITER $$
+
+CREATE EVENT IF NOT EXISTS apagar_listas_expiradas
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP
+DO
+BEGIN
+    DELETE FROM db_listas_vip.listas_promoters
+    WHERE data_lista < CURDATE();
+
+    DELETE FROM db_listas_vip.listas_aniversario
+    WHERE data_evento < CURDATE();
+END$$
+
+DELIMITER ;
