@@ -1,82 +1,74 @@
 (() => {
     document.documentElement.style.visibility = 'hidden';
 
-    const paginaAtual = window.location.pathname.toLowerCase();
+    const path = window.location.pathname.toLowerCase();
+    let tipoNecessario = null;
+    let loginUrl = '../auth/login.html';
 
-    const LOGIN_URL = '../auth/login.html';
-    const AUTH_CONTROLLER = '../../../backend/controllers/AuthController.php';
-
-    function redirecionarLogin() {
-        window.location.replace(LOGIN_URL);
+    if (path.includes('/views/adm/')) {
+        tipoNecessario = 'adm';
     }
 
-    function tipoNecessario() {
-        if (paginaAtual.includes('/adm/')) {
-            return 'adm';
-        }
-
-        if (paginaAtual.includes('/caixa/')) {
-            return 'caixa';
-        }
-
-        if (paginaAtual.includes('mfa.html')) {
-            return 'mfa';
-        }
-
-        if (paginaAtual.includes('trocar_senha.html')) {
-            return 'troca_senha';
-        }
-
-        return null;
+    if (path.includes('/views/caixa/')) {
+        tipoNecessario = 'caixa';
     }
 
-    async function verificarAcesso() {
+    if (path.includes('/views/auth/mfa.html')) {
+        tipoNecessario = 'mfa';
+        loginUrl = 'login.html';
+    }
+
+    if (path.includes('/views/auth/trocar_senha.html')) {
+        tipoNecessario = 'trocar_senha';
+        loginUrl = 'login.html';
+    }
+
+    async function bloquear() {
+        window.location.replace(loginUrl);
+    }
+
+    async function verificar() {
         try {
-            const response = await fetch(AUTH_CONTROLLER, {
+            const response = await fetch('../../../backend/controllers/AuthController.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 credentials: 'include',
+                cache: 'no-store',
                 body: JSON.stringify({
                     acao: 'verificar_sessao'
                 })
             });
 
             const data = await response.json();
-            const tipo = tipoNecessario();
 
-            if (!data.success) {
-                redirecionarLogin();
+            if (tipoNecessario === 'adm') {
+                if (data.success === true && data.usuario_tipo === 'adm') {
+                    document.documentElement.style.visibility = 'visible';
+                    return;
+                }
+
+                bloquear();
                 return;
             }
 
-            if (tipo === 'adm' && data.usuario_tipo !== 'adm') {
-                redirecionarLogin();
-                return;
-            }
+            if (tipoNecessario === 'caixa') {
+                if (data.success === true && data.usuario_tipo === 'caixa') {
+                    document.documentElement.style.visibility = 'visible';
+                    return;
+                }
 
-            if (tipo === 'caixa' && data.usuario_tipo !== 'caixa') {
-                redirecionarLogin();
-                return;
-            }
-
-            if (tipo === 'mfa' && data.mfa_pendente !== true) {
-                redirecionarLogin();
-                return;
-            }
-
-            if (tipo === 'troca_senha' && data.troca_senha_pendente !== true) {
-                redirecionarLogin();
+                bloquear();
                 return;
             }
 
             document.documentElement.style.visibility = 'visible';
 
         } catch (error) {
-            redirecionarLogin();
+            bloquear();
         }
     }
 
-    verificarAcesso();
+    verificar();
 })();

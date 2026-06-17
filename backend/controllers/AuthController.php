@@ -99,28 +99,15 @@ if (!is_array($dados)) {
 $acao = trim($dados['acao'] ?? 'login');
 
 if ($acao === 'verificar_sessao') {
-    if (isset($_SESSION['usuario_id'])) {
+    if (
+        isset($_SESSION['usuario_id']) &&
+        isset($_SESSION['usuario_tipo'])
+    ) {
         resposta_json([
             "success" => true,
             "usuario_id" => $_SESSION['usuario_id'],
             "usuario_tipo" => $_SESSION['usuario_tipo'],
             "usuario_nome" => $_SESSION['usuario_nome'] ?? ''
-        ]);
-    }
-
-    if (isset($_SESSION['mfa_usuario_id'])) {
-        resposta_json([
-            "success" => true,
-            "mfa_pendente" => true,
-            "message" => "Sessão MFA ativa."
-        ]);
-    }
-
-    if (isset($_SESSION['troca_senha_usuario_id'])) {
-        resposta_json([
-            "success" => true,
-            "troca_senha_pendente" => true,
-            "message" => "Sessão de troca de senha ativa."
         ]);
     }
 
