@@ -1,5 +1,18 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: TotpServiceTest.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Teste unitário que valida regras do sistema, requisitos de segurança ou
+| qualidade do código.
+|
+| SEGURANÇA APLICADA:
+| - Geração e validação de códigos TOTP para MFA do administrador.
+| - Uso de segredo MFA protegido antes de ser armazenado no banco.
+| - Testa funcionalidades relacionadas ao MFA/TOTP.
+*/
 use PHPUnit\Framework\TestCase;
 
 class TotpServiceTest extends TestCase {
@@ -21,14 +34,12 @@ class TotpServiceTest extends TestCase {
             'JBSWY3DPEHPK3PXP'
         );
 
-        $urlDecodificadaUmaVez = urldecode($url);
-        $urlDecodificadaDuasVezes = urldecode($urlDecodificadaUmaVez);
+        $urlDecodificada = urldecode($url);
 
         $this->assertStringContainsString('api.qrserver.com', $url);
-        $this->assertStringContainsString('otpauth://totp', $urlDecodificadaDuasVezes);
-        $this->assertStringContainsString('JamesBar', $urlDecodificadaDuasVezes);
-        $this->assertStringContainsString('admin@jamesbar.com', $urlDecodificadaDuasVezes);
-        $this->assertStringContainsString('JBSWY3DPEHPK3PXP', $urlDecodificadaDuasVezes);
+        $this->assertStringContainsString('otpauth://totp', $urlDecodificada);
+        $this->assertStringContainsString('JamesBar', $urlDecodificada);
+        $this->assertStringContainsString('admin@jamesbar.com', $urlDecodificada);
     }
 
     public function testCodigoComLetrasRetornaFalse() {

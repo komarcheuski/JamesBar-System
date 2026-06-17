@@ -1,5 +1,16 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: SqlSchemaTest.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Teste unitário que valida regras do sistema, requisitos de segurança ou
+| qualidade do código.
+|
+| SEGURANÇA APLICADA:
+| - Testa presença de tabelas e campos de segurança no schema SQL.
+*/
 use PHPUnit\Framework\TestCase;
 
 class SqlSchemaTest extends TestCase {

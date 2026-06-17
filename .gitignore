@@ -1,3 +1,7 @@
+# Comentário de documentação JamesBar
+# Arquivo: .gitignore
+# Função: Arquivo de configuração do projeto JamesBar.
+
 # Dependências PHP
 backend/vendor/
 

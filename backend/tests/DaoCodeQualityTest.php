@@ -1,5 +1,16 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: DaoCodeQualityTest.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Teste unitário que valida regras do sistema, requisitos de segurança ou
+| qualidade do código.
+|
+| SEGURANÇA APLICADA:
+| - Testa uso de Prepared Statements nos DAOs.
+*/
 use PHPUnit\Framework\TestCase;
 
 class DaoCodeQualityTest extends TestCase {

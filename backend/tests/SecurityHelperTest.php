@@ -1,5 +1,19 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: SecurityHelperTest.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Teste unitário que valida regras do sistema, requisitos de segurança ou
+| qualidade do código.
+|
+| SEGURANÇA APLICADA:
+| - Validação de força de senha.
+| - Geração e validação de token CSRF.
+| - Criptografia e descriptografia de dados sensíveis com chave configurada.
+| - Sanitização e validação de entradas utilizadas pelo sistema.
+*/
 use PHPUnit\Framework\TestCase;
 
 class SecurityHelperTest extends TestCase {

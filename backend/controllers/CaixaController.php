@@ -1,17 +1,33 @@
 <?php
 
-session_start();
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: CaixaController.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Controla ações do caixa, como cadastro de cliente, consulta por CPF, entrada,
+| saída, pausa e encerramento de turno.
+|
+| SEGURANÇA APLICADA:
+| - Verificação de sessão autenticada para operador de caixa.
+| - Validação de CSRF nas ações de entrada, saída, pausa e turno.
+| - Uso de DAO com Prepared Statements para evitar SQL Injection.
+| - Auditoria de ações operacionais em logs_sistema.
+*/
+require_once __DIR__ . '/../config/session.php';
 
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../dao/ClienteDAO.php';
 require_once __DIR__ . '/../dao/MovimentacaoDAO.php';
 require_once __DIR__ . '/../dao/TurnoDAO.php';
+require_once __DIR__ . '/../dao/LogDAO.php';
 require_once __DIR__ . '/../security/SecurityHelper.php';
 
 $clienteDAO = new ClienteDAO();
 $movimentacaoDAO = new MovimentacaoDAO();
 $turnoDAO = new TurnoDAO();
+$logDAO = new LogDAO();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     jb_require_login('caixa');
@@ -24,6 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'message' => 'Dados inválidos.'
         ]);
     }
+
+    jb_require_csrf($dados);
 
     $acao = jb_sanitize_text($dados['acao'] ?? '', 50);
 
@@ -94,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $clienteId = $clienteDAO->cadastrar($nome, $cpf, $dataAniversario);
+        $logDAO->registrar($_SESSION['usuario_id'] ?? null, 'CADASTRAR_CLIENTE', 'Cliente cadastrado CPF: ' . $cpf);
 
         jb_json_response([
             'success' => true,
@@ -118,6 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $caixaId = (int) $_SESSION['usuario_id'];
         $movimentacaoDAO->registrarEntrada($clienteId, $caixaId);
+        $logDAO->registrar($caixaId, 'LIBERAR_ENTRADA', 'Entrada liberada para cliente ID: ' . $clienteId);
 
         jb_json_response([
             'success' => true,
@@ -128,6 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($acao === 'pausar_turno') {
         $caixaId = (int) $_SESSION['usuario_id'];
         $turnoDAO->pausarTurno($caixaId);
+        $logDAO->registrar($caixaId, 'PAUSAR_TURNO', 'Caixa acionou pausa.');
 
         session_unset();
         session_destroy();
@@ -142,6 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($acao === 'encerrar_turno') {
         $caixaId = (int) $_SESSION['usuario_id'];
         $turnoDAO->fecharTurno($caixaId);
+        $logDAO->registrar($caixaId, 'ENCERRAR_TURNO', 'Caixa encerrou turno.');
 
         session_unset();
         session_destroy();

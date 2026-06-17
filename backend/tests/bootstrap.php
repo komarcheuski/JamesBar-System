@@ -1,5 +1,12 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: bootstrap.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Inicializa o ambiente de testes PHPUnit e carrega dependências necessárias.
+*/
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/../security/SecurityHelper.php';

@@ -1,10 +1,26 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: ListaPromoterDAO.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Responsável pela camada de persistência relacionada a ListaPromoter, isolando
+| consultas SQL do restante do sistema.
+|
+| SEGURANÇA APLICADA:
+| - Prepared Statements para operações em listas de promoters.
+| - Prepared Statements para operações de promoters.
+*/
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Lista.php';
 
 class ListaPromoterDAO {
 
+    /**
+     * FUNÇÃO: Lista registros para exibição no painel administrativo.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function listarTodas($diaId = null) {
         $conn = Database::conectar();
 
@@ -57,6 +73,10 @@ class ListaPromoterDAO {
         return $listas;
     }
 
+    /**
+     * FUNÇÃO: Busca um registro específico pelo identificador usando parâmetro preparado.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function buscarPorId($id) {
         $conn = Database::conectar();
 

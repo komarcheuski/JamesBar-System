@@ -1,5 +1,13 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: ModelsTest.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Teste unitário que valida regras do sistema, requisitos de segurança ou
+| qualidade do código.
+*/
 use PHPUnit\Framework\TestCase;
 
 class ModelsTest extends TestCase {

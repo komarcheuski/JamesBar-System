@@ -1,11 +1,26 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: PromoterDAO.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Responsável pela camada de persistência relacionada a Promoter, isolando
+| consultas SQL do restante do sistema.
+|
+| SEGURANÇA APLICADA:
+| - Prepared Statements para operações de promoters.
+*/
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Promoter.php';
 require_once __DIR__ . '/../models/Lista.php';
 
 class PromoterDAO {
 
+    /**
+     * FUNÇÃO: Remove listas expiradas para manter a base limpa.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function limparListasAntigas() {
         $conn = Database::conectar();
 
@@ -20,6 +35,10 @@ class PromoterDAO {
         ");
     }
 
+    /**
+     * FUNÇÃO: Lista todos os registros ativos da entidade.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function listarTodos() {
         $this->limparListasAntigas();
 
@@ -43,6 +62,10 @@ class PromoterDAO {
         return $promoters;
     }
 
+    /**
+     * FUNÇÃO: Lista os dias disponíveis para criação de listas de promoters.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function listarDias() {
         $conn = Database::conectar();
 
@@ -58,6 +81,10 @@ class PromoterDAO {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * FUNÇÃO: Cadastra promoter e seus dias de atuação usando transação/DAO.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function cadastrarPromoter($nome, $telefone, $dias) {
         $conn = Database::conectar();
 
@@ -99,6 +126,10 @@ class PromoterDAO {
         return $stmt->execute();
     }
 
+    /**
+     * FUNÇÃO: Atualiza dados do promoter mantendo controle de persistência no DAO.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function editarPromoter($id, $nome, $telefone, $dias) {
         $conn = Database::conectar();
 
@@ -134,6 +165,10 @@ class PromoterDAO {
         return $stmt->execute();
     }
 
+    /**
+     * FUNÇÃO: Remove promoter e dados relacionados conforme regras do banco.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function excluirPromoter($id) {
         $conn = Database::conectar();
 
@@ -148,6 +183,10 @@ class PromoterDAO {
         return $stmt->execute();
     }
 
+    /**
+     * FUNÇÃO: Cria lista de promoter com convidados e VIPs associados.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function cadastrarListaPromoter($promoterId, $diaId, $dataLista, $convidados, $vips) {
         $this->limparListasAntigas();
 
@@ -261,6 +300,10 @@ class PromoterDAO {
         }
     }
 
+    /**
+     * FUNÇÃO: Cria lista de aniversário com seus convidados associados.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function cadastrarListaAniversario($nome, $cpf, $dataEvento, $convidados) {
         $this->limparListasAntigas();
 
@@ -341,6 +384,10 @@ class PromoterDAO {
         }
     }
 
+    /**
+     * FUNÇÃO: Lista listas de promoters com filtros opcionais por dia.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function listarListasPromoters($diaId = null) {
         $this->limparListasAntigas();
 
@@ -393,6 +440,10 @@ class PromoterDAO {
         return $listas;
     }
 
+    /**
+     * FUNÇÃO: Lista listas de aniversário cadastradas.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function listarListasAniversario() {
         $this->limparListasAntigas();
 
@@ -426,6 +477,10 @@ class PromoterDAO {
         return $listas;
     }
 
+    /**
+     * FUNÇÃO: Consulta status das listas de promoters por data.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function statusEnvioPromoters($dataEvento) {
         $conn = Database::conectar();
 

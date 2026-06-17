@@ -1,5 +1,16 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: DocumentationSecurityRequirementsTest.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Teste unitário que valida regras do sistema, requisitos de segurança ou
+| qualidade do código.
+|
+| SEGURANÇA APLICADA:
+| - Testa se a documentação dos requisitos de segurança está presente.
+*/
 use PHPUnit\Framework\TestCase;
 
 class DocumentationSecurityRequirementsTest extends TestCase {

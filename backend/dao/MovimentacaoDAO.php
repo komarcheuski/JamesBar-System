@@ -1,9 +1,25 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: MovimentacaoDAO.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Responsável pela camada de persistência relacionada a Movimentacao, isolando
+| consultas SQL do restante do sistema.
+|
+| SEGURANÇA APLICADA:
+| - Prepared Statements para registro de entrada e saída.
+| - Mantém rastreabilidade da movimentação associada ao caixa autenticado.
+*/
 require_once __DIR__ . '/../config/Database.php';
 
 class MovimentacaoDAO {
 
+    /**
+     * FUNÇÃO: Registra entrada do cliente e associa a movimentação ao caixa autenticado.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function registrarEntrada($clienteId, $caixaId) {
         $conn = Database::conectar();
 
@@ -26,6 +42,10 @@ class MovimentacaoDAO {
         return $stmt->execute();
     }
 
+    /**
+     * FUNÇÃO: Consulta totais operacionais do caixa para atualizar o dashboard.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function buscarContadores($caixaId) {
         $conn = Database::conectar();
 

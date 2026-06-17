@@ -1,9 +1,25 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: TurnoDAO.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Responsável pela camada de persistência relacionada a Turno, isolando
+| consultas SQL do restante do sistema.
+|
+| SEGURANÇA APLICADA:
+| - Prepared Statements para operações de turno e pausa.
+| - Controle de estado do turno para impedir uso indevido fora do fluxo esperado.
+*/
 require_once __DIR__ . '/../config/Database.php';
 
 class TurnoDAO {
 
+    /**
+     * FUNÇÃO: Busca o turno do usuário no dia atual.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function buscarTurnoHoje($usuarioId) {
         $conn = Database::conectar();
 
@@ -22,6 +38,10 @@ class TurnoDAO {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * FUNÇÃO: Abre ou retoma turno do caixa, mantendo controle de status operacional.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function abrirOuRetomarTurno($usuarioId) {
         $conn = Database::conectar();
 
@@ -64,6 +84,10 @@ class TurnoDAO {
         return true;
     }
 
+    /**
+     * FUNÇÃO: Registra pausa manual do caixa e atualiza o status do turno.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function pausarTurno($usuarioId) {
         $conn = Database::conectar();
 
@@ -102,6 +126,10 @@ class TurnoDAO {
         return $stmtPausa->execute();
     }
 
+    /**
+     * FUNÇÃO: Registra pausa automática por inatividade, requisito de segurança do caixa.
+     * SEGURANÇA: Apoia controles de segurança contra uso indevido de sessão ou força bruta.
+     */
     public function pausarTurnoAutomatico($usuarioId) {
         $conn = Database::conectar();
 
@@ -140,6 +168,10 @@ class TurnoDAO {
         return $stmtPausa->execute();
     }
 
+    /**
+     * FUNÇÃO: Fecha o turno do caixa e finaliza pausas abertas.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function fecharTurno($usuarioId) {
         $conn = Database::conectar();
 
@@ -167,6 +199,10 @@ class TurnoDAO {
         return $stmt->execute();
     }
 
+    /**
+     * FUNÇÃO: Busca resumo do turno usado no painel do caixa/administrador.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function buscarResumoOperacional($usuarioId) {
         $conn = Database::conectar();
 
@@ -199,6 +235,10 @@ class TurnoDAO {
         ];
     }
 
+    /**
+     * FUNÇÃO: Lista os intervalos de pausa registrados no turno.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     public function listarPausasDoTurno($turnoId) {
         $conn = Database::conectar();
 
@@ -218,6 +258,10 @@ class TurnoDAO {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * FUNÇÃO: Finaliza a última pausa aberta antes de retomar ou fechar o turno.
+     * SEGURANÇA: Usa Prepared Statements ou fluxo controlado para reduzir risco de SQL Injection e alteração indevida.
+     */
     private function finalizarUltimaPausa($turnoId) {
         $conn = Database::conectar();
 

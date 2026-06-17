@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Comentário de documentação JamesBar - Arquivo: backend/phpunit.xml. Função: Arquivo de configuração do PHPUnit para execução dos testes unitários. -->
 <phpunit colors="true" bootstrap="tests/bootstrap.php" cacheDirectory=".phpunit.cache">
     <testsuites>
         <testsuite name="JamesBar Testes">

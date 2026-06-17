@@ -105,13 +105,13 @@ INSERT INTO usuarios (
     mfa_secret_key,
     mfa_ativo
 ) VALUES
-('Administrador','admin@jamesbar.com',MD5('admin123'),'adm',TRUE,0,NULL,NULL,NULL,FALSE),
-('Caixa 01','caixa01@jamesbar.com',MD5('caixa01'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE),
-('Caixa 02','caixa02@jamesbar.com',MD5('caixa02'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE),
-('Caixa 03','caixa03@jamesbar.com',MD5('caixa03'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE),
-('Caixa 04','caixa04@jamesbar.com',MD5('caixa04'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE),
-('Caixa 05','caixa05@jamesbar.com',MD5('caixa05'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE),
-('Caixa 06','caixa06@jamesbar.com',MD5('caixa06'),'caixa',TRUE,0,NULL,NULL,NULL,FALSE);
+('Administrador','admin@jamesbar.com','$2y$12$xdLUuul8EV/kfnwQQPMFZOJOM3XdXB7A1iLrtGil5YKCim8zLYewy','adm',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 01','caixa01@jamesbar.com','$2y$12$afLczhLcCeKb9DgBb/piZO2FqL5TCe00t8xt7/sX99WKz92fHCw86','caixa',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 02','caixa02@jamesbar.com','$2y$12$.SGXpzUhbaIaT/tNz6/TN.7YucvHzk6o0RAqGBhsRLotNKDmimwqi','caixa',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 03','caixa03@jamesbar.com','$2y$12$fc7j6U584tJF1vL.2ZpNKufCZsvIQ6knEhTX93K6rOJw8l7XInQa2','caixa',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 04','caixa04@jamesbar.com','$2y$12$sy9wJEIEpvQDAnWeW07Xd.ulUiDQlxwmQbMu8PnXziHOkj5FIaAU2','caixa',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 05','caixa05@jamesbar.com','$2y$12$Cc9gZIHTyo7AyrLa18qFkuci0mNRilgFtbt/tYvSVPmaLJTdrFVAe','caixa',TRUE,0,NULL,NULL,NULL,FALSE),
+('Caixa 06','caixa06@jamesbar.com','$2y$12$aWA4kT7IBDJWyTyISaHWFe0M1H6vUOiVNdbjebC22ym9BjkEgs6EC','caixa',TRUE,0,NULL,NULL,NULL,FALSE);
 
 INSERT INTO clientes (nome, cpf, data_aniversario) VALUES
 ('João da Silva','111.111.111-11','2000-05-10'),

@@ -1,21 +1,42 @@
 <?php
 
-session_start();
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: AuthController.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Controla login, logout, MFA, troca obrigatória de senha, verificação de sessão
+| e respostas JSON de autenticação.
+|
+| SEGURANÇA APLICADA:
+| - Autenticação com hash seguro de senha usando password_verify/password_hash.
+| - Bloqueio temporário após tentativas inválidas de login.
+| - Regeneração do ID da sessão após autenticação para reduzir risco de Session Fixation.
+| - Integração com MFA/TOTP para perfil administrador.
+| - Registro de eventos sensíveis em logs_sistema.
+| - Validação de CSRF nas ações POST.
+*/
+require_once __DIR__ . '/../config/session.php';
 
 header("Content-Type: application/json");
 
 require_once __DIR__ . '/../dao/UsuarioDAO.php';
 require_once __DIR__ . '/../dao/TurnoDAO.php';
+require_once __DIR__ . '/../dao/LogDAO.php';
 require_once __DIR__ . '/../security/TotpService.php';
 require_once __DIR__ . '/../security/SecurityHelper.php';
 
 $usuarioDAO = new UsuarioDAO();
 $turnoDAO = new TurnoDAO();
 $totpService = new TotpService();
+$logDAO = new LogDAO();
 
 $limiteTentativas = 5;
 $minutosBloqueio = 10;
 
+/**
+ * FUNÇÃO: Retorna resposta JSON padronizada e encerra a execução do controller.
+ */
 function resposta_json($dados) {
     echo json_encode($dados);
     exit;
@@ -23,6 +44,13 @@ function resposta_json($dados) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $acao = $_GET['acao'] ?? '';
+
+    if ($acao === 'csrf_token') {
+        resposta_json([
+            'success' => true,
+            'csrf_token' => jb_csrf_token()
+        ]);
+    }
 
     if ($acao === 'mfa_status') {
         if (!isset($_SESSION['mfa_usuario_id'])) {
@@ -99,15 +127,31 @@ if (!is_array($dados)) {
 $acao = trim($dados['acao'] ?? 'login');
 
 if ($acao === 'verificar_sessao') {
-    if (
-        isset($_SESSION['usuario_id']) &&
-        isset($_SESSION['usuario_tipo'])
-    ) {
+    if (isset($_SESSION['usuario_id'])) {
         resposta_json([
             "success" => true,
             "usuario_id" => $_SESSION['usuario_id'],
             "usuario_tipo" => $_SESSION['usuario_tipo'],
-            "usuario_nome" => $_SESSION['usuario_nome'] ?? ''
+            "usuario_nome" => $_SESSION['usuario_nome'] ?? '',
+            "csrf_token" => jb_csrf_token()
+        ]);
+    }
+
+    if (isset($_SESSION['mfa_usuario_id'])) {
+        resposta_json([
+            "success" => true,
+            "mfa_pendente" => true,
+            "message" => "Sessão MFA ativa.",
+            "csrf_token" => jb_csrf_token()
+        ]);
+    }
+
+    if (isset($_SESSION['troca_senha_usuario_id'])) {
+        resposta_json([
+            "success" => true,
+            "troca_senha_pendente" => true,
+            "message" => "Sessão de troca de senha ativa.",
+            "csrf_token" => jb_csrf_token()
         ]);
     }
 
@@ -138,6 +182,7 @@ if ($acao === 'login') {
     $usuario = $usuarioDAO->buscarPorEmail($email);
 
     if (!$usuario) {
+        $logDAO->registrar(null, 'LOGIN_FALHA', 'E-mail não encontrado: ' . $email);
         resposta_json([
             "success" => false,
             "message" => "Usuário não encontrado."
@@ -145,6 +190,7 @@ if ($acao === 'login') {
     }
 
     if (!$usuario["ativo"]) {
+        $logDAO->registrar($usuario["id"], 'LOGIN_FALHA', 'Usuário inativo tentou acessar.');
         resposta_json([
             "success" => false,
             "message" => "Usuário inativo."
@@ -164,7 +210,7 @@ if ($acao === 'login') {
         }
     }
 
-    if (md5($senha) !== $usuario["senha_hash"]) {
+    if (!jb_verify_senha($senha, $usuario["senha_hash"])) {
         $tentativasAtuais = (int) ($usuario["tentativas_login"] ?? 0);
         $novasTentativas = $tentativasAtuais + 1;
 
@@ -172,6 +218,7 @@ if ($acao === 'login') {
             $bloqueioAte = date('Y-m-d H:i:s', time() + ($minutosBloqueio * 60));
 
             $usuarioDAO->bloquearLoginTemporariamente($usuario["id"], $bloqueioAte);
+            $logDAO->registrar($usuario["id"], 'LOGIN_BLOQUEIO', 'Conta bloqueada após tentativas inválidas.');
 
             resposta_json([
                 "success" => false,
@@ -180,6 +227,7 @@ if ($acao === 'login') {
         }
 
         $usuarioDAO->atualizarTentativasLogin($usuario["id"], $novasTentativas);
+        $logDAO->registrar($usuario["id"], 'LOGIN_FALHA', 'Senha incorreta. Tentativa ' . $novasTentativas . ' de ' . $limiteTentativas . '.');
 
         $tentativasRestantes = $limiteTentativas - $novasTentativas;
 
@@ -191,7 +239,12 @@ if ($acao === 'login') {
 
     $usuarioDAO->limparTentativasLogin($usuario["id"]);
 
+    if (jb_hash_precisa_rehash($usuario["senha_hash"])) {
+        $usuarioDAO->atualizarSenhaHash($usuario["id"], jb_hash_senha($senha));
+    }
+
     if ((int) $usuario["primeiro_acesso"] === 1) {
+        jb_regenerate_session();
         $_SESSION["troca_senha_usuario_id"] = $usuario["id"];
         $_SESSION["troca_senha_usuario_tipo"] = $usuario["tipo"];
 
@@ -204,6 +257,7 @@ if ($acao === 'login') {
     }
 
     if ($usuario["tipo"] === "adm") {
+        jb_regenerate_session();
         $_SESSION["mfa_usuario_id"] = $usuario["id"];
 
         resposta_json([
@@ -227,6 +281,7 @@ if ($acao === 'login') {
         $turnoDAO->abrirOuRetomarTurno($usuario["id"]);
     }
 
+    jb_regenerate_session();
     $_SESSION["usuario_id"] = $usuario["id"];
     $_SESSION["usuario_nome"] = htmlspecialchars($usuario["nome"], ENT_QUOTES, 'UTF-8');
     $_SESSION["usuario_email"] = htmlspecialchars($usuario["email"], ENT_QUOTES, 'UTF-8');
@@ -237,6 +292,8 @@ if ($acao === 'login') {
         ? "../adm/dashboardAdm.html"
         : "../caixa/dashboardCaixa.html";
 
+    $logDAO->registrar($usuario["id"], 'LOGIN_SUCESSO', 'Login validado para perfil ' . $usuario["tipo"] . '.');
+
     resposta_json([
         "success" => true,
         "message" => "Login realizado com sucesso.",
@@ -245,7 +302,8 @@ if ($acao === 'login') {
             "id" => $usuario["id"],
             "nome" => htmlspecialchars($usuario["nome"], ENT_QUOTES, 'UTF-8'),
             "tipo" => $usuario["tipo"]
-        ]
+        ],
+        "csrf_token" => jb_csrf_token()
     ]);
 }
 
@@ -346,6 +404,7 @@ if ($acao === 'verificar_mfa') {
         $usuarioDAO->ativarMfa($usuario['id']);
     }
 
+    jb_regenerate_session();
     $_SESSION["usuario_id"] = $usuario["id"];
     $_SESSION["usuario_nome"] = htmlspecialchars($usuario["nome"], ENT_QUOTES, 'UTF-8');
     $_SESSION["usuario_email"] = htmlspecialchars($usuario["email"], ENT_QUOTES, 'UTF-8');
@@ -354,10 +413,13 @@ if ($acao === 'verificar_mfa') {
 
     unset($_SESSION['mfa_usuario_id']);
 
+    $logDAO->registrar($usuario["id"], 'MFA_SUCESSO', 'MFA validado para ADM.');
+
     resposta_json([
         "success" => true,
         "message" => "MFA validado com sucesso.",
-        "redirect" => "../adm/dashboardAdm.html"
+        "redirect" => "../adm/dashboardAdm.html",
+        "csrf_token" => jb_csrf_token()
     ]);
 }
 

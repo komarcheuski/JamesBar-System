@@ -1,6 +1,19 @@
 <?php
 
-session_start();
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: PromoterController.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Controla cadastro, listagem e gerenciamento de promoters, listas VIP e listas
+| de aniversário.
+|
+| SEGURANÇA APLICADA:
+| - Validação de sessão/perfil antes da gestão de promoters e listas.
+| - Validação de CSRF nas ações de cadastro, alteração e exclusão.
+| - Uso de DAO com Prepared Statements contra SQL Injection.
+*/
+require_once __DIR__ . '/../config/session.php';
 
 header('Content-Type: application/json');
 
@@ -69,6 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'message' => 'Dados inválidos.'
         ]);
     }
+
+    jb_require_csrf($dados);
 
     $acao = jb_sanitize_text($dados['acao'] ?? '', 50);
 

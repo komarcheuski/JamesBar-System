@@ -1,3 +1,7 @@
+# Comentário de documentação JamesBar
+# Arquivo: backend/.gitignore
+# Função: Arquivo de configuração do projeto JamesBar.
+
 /vendor/
 /.phpunit.cache/
 /security/keys/

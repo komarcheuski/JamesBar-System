@@ -1,15 +1,30 @@
 <?php
 
-session_start();
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: AdmController.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Controla ações do administrador, como gestão de caixas, abertura/encerramento
+| de turno do dia e consulta de status.
+|
+| SEGURANÇA APLICADA:
+| - Verificação de sessão e perfil administrador antes das ações.
+| - Validação de CSRF em requisições que alteram dados.
+| - Auditoria de ações administrativas em logs_sistema.
+*/
+require_once __DIR__ . '/../config/session.php';
 
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../dao/UsuarioDAO.php';
 require_once __DIR__ . '/../dao/TurnoDAO.php';
+require_once __DIR__ . '/../dao/LogDAO.php';
 require_once __DIR__ . '/../security/SecurityHelper.php';
 
 $usuarioDAO = new UsuarioDAO();
 $turnoDAO = new TurnoDAO();
+$logDAO = new LogDAO();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $acao = jb_sanitize_text($_GET['acao'] ?? '', 50);
@@ -83,6 +98,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
     }
 
+    jb_require_csrf($dados);
+
     $acao = jb_sanitize_text($dados['acao'] ?? '', 50);
 
     if ($acao === 'cadastrar_caixa') {
@@ -126,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $usuarioDAO->cadastrarCaixa($nome, $email, $senha);
+        $logDAO->registrar($_SESSION['usuario_id'] ?? null, 'CADASTRAR_CAIXA', 'Caixa cadastrado: ' . $email);
 
         jb_json_response([
             'success' => true,
@@ -144,6 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $usuarioDAO->desativarCaixa($id);
+        $logDAO->registrar($_SESSION['usuario_id'] ?? null, 'DESATIVAR_CAIXA', 'Caixa ID desativado: ' . $id);
 
         jb_json_response([
             'success' => true,

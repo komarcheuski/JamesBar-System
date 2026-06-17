@@ -1,5 +1,16 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: ControllerSecurityTest.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Teste unitário que valida regras do sistema, requisitos de segurança ou
+| qualidade do código.
+|
+| SEGURANÇA APLICADA:
+| - Testa presença de controles de segurança nos controllers.
+*/
 use PHPUnit\Framework\TestCase;
 
 class ControllerSecurityTest extends TestCase {

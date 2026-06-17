@@ -1,3 +1,11 @@
+# ARQUIVO: php-tests.yml
+#
+# FUNÇÃO:
+# Workflow de integração contínua para executar testes automaticamente no GitHub
+# Actions.
+#
+# SEGURANÇA APLICADA:
+# - Execução automática de testes unitários no GitHub Actions.
 name: PHP Unit Tests
 
 on:

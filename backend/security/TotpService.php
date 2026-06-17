@@ -1,7 +1,23 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: TotpService.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Implementa o serviço de autenticação de dois fatores baseado em TOTP para
+| administradores.
+|
+| SEGURANÇA APLICADA:
+| - Geração e validação de códigos TOTP para MFA do administrador.
+| - Uso de segredo MFA protegido antes de ser armazenado no banco.
+*/
 class TotpService {
 
+    /**
+     * FUNÇÃO: Gera segredo TOTP usado pelo Google Authenticator.
+     * SEGURANÇA: Apoia o MFA/TOTP do administrador.
+     */
     public function gerarSecret($length = 16) {
         $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
         $secret = '';
@@ -13,6 +29,9 @@ class TotpService {
         return $secret;
     }
 
+    /**
+     * FUNÇÃO: Executa uma regra específica deste arquivo mantendo a responsabilidade organizada.
+     */
     public function gerarQrCodeUrl($email, $secret) {
         $issuer = 'JamesBar';
         $label = rawurlencode($issuer . ':' . $email);
@@ -22,6 +41,9 @@ class TotpService {
         return "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" . urlencode($otpauth);
     }
 
+    /**
+     * FUNÇÃO: Executa uma regra específica deste arquivo mantendo a responsabilidade organizada.
+     */
     public function verificarCodigo($secret, $codigo) {
         $codigo = preg_replace('/\D/', '', $codigo);
 
@@ -40,6 +62,9 @@ class TotpService {
         return false;
     }
 
+    /**
+     * FUNÇÃO: Executa uma regra específica deste arquivo mantendo a responsabilidade organizada.
+     */
     private function gerarCodigo($secret, $tempo) {
         $chave = $this->base32Decode($secret);
         $tempoBinario = pack('N*', 0) . pack('N*', $tempo);
@@ -56,6 +81,9 @@ class TotpService {
         return str_pad($codigoBinario % 1000000, 6, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * FUNÇÃO: Executa uma regra específica deste arquivo mantendo a responsabilidade organizada.
+     */
     private function base32Decode($secret) {
         $base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
         $secret = strtoupper($secret);

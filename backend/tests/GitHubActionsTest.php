@@ -1,5 +1,13 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: GitHubActionsTest.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Teste unitário que valida regras do sistema, requisitos de segurança ou
+| qualidade do código.
+*/
 use PHPUnit\Framework\TestCase;
 
 class GitHubActionsTest extends TestCase {

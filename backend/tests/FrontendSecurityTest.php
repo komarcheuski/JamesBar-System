@@ -1,5 +1,16 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| ARQUIVO: FrontendSecurityTest.php
+|--------------------------------------------------------------------------
+| FUNÇÃO:
+| Teste unitário que valida regras do sistema, requisitos de segurança ou
+| qualidade do código.
+|
+| SEGURANÇA APLICADA:
+| - Testa proteções implementadas no frontend, como autenticação e CSRF.
+*/
 use PHPUnit\Framework\TestCase;
 
 class FrontendSecurityTest extends TestCase {
