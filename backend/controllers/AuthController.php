@@ -214,7 +214,7 @@ if ($acao === 'login') {
         $tentativasAtuais = (int) ($usuario["tentativas_login"] ?? 0);
         $novasTentativas = $tentativasAtuais + 1;
 
-        if ($novasTentativas >= $limiteTentativas) {
+        if ($novasTentativas >= 5) {
             $bloqueioAte = date('Y-m-d H:i:s', time() + ($minutosBloqueio * 60));
 
             $usuarioDAO->bloquearLoginTemporariamente($usuario["id"], $bloqueioAte);

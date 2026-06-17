@@ -59,7 +59,7 @@ class Database {
             self::carregarEnv();
 
             $host = self::env('DB_HOST', 'localhost');
-            $dbName = self::env('DB_NAME', 'db_core');
+            $dbName = self::env('DB_NAME_CORE', 'db_core');
             $username = self::env('DB_USER', 'root');
             $password = self::env('DB_PASS', '');
             $charset = self::env('DB_CHARSET', 'utf8mb4');

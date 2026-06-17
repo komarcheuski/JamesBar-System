@@ -5,18 +5,23 @@
 | ARQUIVO: TotpService.php
 |--------------------------------------------------------------------------
 | FUNÇÃO:
-| Implementa o serviço de autenticação de dois fatores baseado em TOTP para
-| administradores.
+| Implementa o serviço de autenticação multifator baseado em TOTP,
+| utilizado no MFA dos usuários administradores.
 |
 | SEGURANÇA APLICADA:
-| - Geração e validação de códigos TOTP para MFA do administrador.
-| - Uso de segredo MFA protegido antes de ser armazenado no banco.
+| - Geração de segredo TOTP compatível com Google Authenticator.
+| - Validação de códigos temporários de 6 dígitos.
+| - Janela de tolerância curta para evitar falhas por diferença de horário.
+| - Apoia o requisito de MFA para acesso administrativo.
 */
 class TotpService {
 
     /**
-     * FUNÇÃO: Gera segredo TOTP usado pelo Google Authenticator.
-     * SEGURANÇA: Apoia o MFA/TOTP do administrador.
+     * FUNÇÃO:
+     * Gera um segredo Base32 usado pelo Google Authenticator.
+     *
+     * SEGURANÇA:
+     * Usa random_int(), que é adequado para geração aleatória segura.
      */
     public function gerarSecret($length = 16) {
         $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -30,11 +35,21 @@ class TotpService {
     }
 
     /**
-     * FUNÇÃO: Executa uma regra específica deste arquivo mantendo a responsabilidade organizada.
+     * FUNÇÃO:
+     * Gera a URL do QR Code para cadastro do MFA no Google Authenticator.
+     *
+     * SEGURANÇA:
+     * Usa o padrão otpauth://totp com issuer, segredo, algoritmo SHA1,
+     * 6 dígitos e período de 30 segundos.
+     *
+     * OBSERVAÇÃO:
+     * O label não é codificado antes da montagem do otpauth, para evitar
+     * dupla codificação do e-mail. A URL completa é codificada apenas no
+     * parâmetro data do serviço de QR Code.
      */
     public function gerarQrCodeUrl($email, $secret) {
         $issuer = 'JamesBar';
-        $label = rawurlencode($issuer . ':' . $email);
+        $label = $issuer . ':' . $email;
 
         $otpauth = "otpauth://totp/{$label}?secret={$secret}&issuer={$issuer}&algorithm=SHA1&digits=6&period=30";
 
@@ -42,7 +57,12 @@ class TotpService {
     }
 
     /**
-     * FUNÇÃO: Executa uma regra específica deste arquivo mantendo a responsabilidade organizada.
+     * FUNÇÃO:
+     * Verifica se o código digitado pelo usuário é válido.
+     *
+     * SEGURANÇA:
+     * Aceita apenas códigos numéricos com 6 dígitos e utiliza uma janela
+     * curta de tolerância para compensar pequenas diferenças de horário.
      */
     public function verificarCodigo($secret, $codigo) {
         $codigo = preg_replace('/\D/', '', $codigo);
@@ -63,7 +83,13 @@ class TotpService {
     }
 
     /**
-     * FUNÇÃO: Executa uma regra específica deste arquivo mantendo a responsabilidade organizada.
+     * FUNÇÃO:
+     * Gera o código TOTP de 6 dígitos a partir do segredo e do intervalo
+     * de tempo atual.
+     *
+     * SEGURANÇA:
+     * Implementa HMAC-SHA1 conforme o padrão TOTP usado por aplicativos
+     * autenticadores.
      */
     private function gerarCodigo($secret, $tempo) {
         $chave = $this->base32Decode($secret);
@@ -82,7 +108,8 @@ class TotpService {
     }
 
     /**
-     * FUNÇÃO: Executa uma regra específica deste arquivo mantendo a responsabilidade organizada.
+     * FUNÇÃO:
+     * Decodifica o segredo Base32 para bytes, permitindo gerar o HMAC.
      */
     private function base32Decode($secret) {
         $base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
